@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:id="@+id/main"
     android:orientation="vertical"
-    tools:context=".FeedActivity">
+    tools:context="com.example.beautyhub.FeedActivity">
 
     <LinearLayout
         android:layout_width="match_parent"

@@ -4,13 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.travelog"
-    compileSdk = 34
+    // השורה הקריטית שתיקנו:
+    namespace = "com.example.beautyhub"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.travelog"
-        minSdk = 34
-        targetSdk = 34
+        applicationId = "com.example.beautyhub"
+        // מומלץ להוריד ל-24 כדי שיתמוך ביותר מכשירים, אלא אם אתה חייב API 34
+        minSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -33,34 +35,29 @@ android {
 }
 
 dependencies {
-
+    // UI & AndroidX
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // Networking & Images
     implementation(libs.glide)
-    implementation (libs.retrofit)
-    implementation (libs.converter.gson)
-    implementation (libs.okhttp)
-    // BOM
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.okhttp)
+
+    // Firebase (שימוש ב-BOM מונע התנגשויות גרסאות)
     implementation(platform(libs.firebase.bom))
-
-
-// Firebase (ללא גרסאות)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.ai)
 
-
-// One-shot (Guava ListenableFuture)
+    // Utilities
     implementation(libs.guava)
-
-
-// Streaming (Reactive Streams Publisher)
     implementation(libs.reactive.streams)
-
-
 }
