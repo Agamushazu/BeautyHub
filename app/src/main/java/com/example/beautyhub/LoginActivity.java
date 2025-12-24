@@ -1,4 +1,4 @@
-package com.example.travelog;
+package com.example.beautyhub;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
@@ -60,7 +60,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent=new Intent(LoginActivity.this, RegistrationActivity.class);
+                Intent intent=new Intent(LoginActivity.this, com.example.beautyhub.RegistrationActivity.class);
                 startActivity(intent);
                 finish();
 

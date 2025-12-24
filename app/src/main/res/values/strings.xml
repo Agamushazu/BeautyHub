@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">BeautyHub</string>
+    <string name="app_name">TraveLog</string>
+
+    <string-array name="levels_array">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
 </resources>

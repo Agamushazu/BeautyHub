@@ -1,5 +1,4 @@
-package com.example.travelog;
-
+package com.example.beautyhub;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,8 +16,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.travelog.utils.RegistrationManager;
-import com.example.travelog.utils.UserImageSelector;
+import com.example.beautyhub.utils.RegistrationManager;
+import com.example.beautyhub.utils.UserImageSelector;
 
 public class RegistrationActivity extends AppCompatActivity {
 

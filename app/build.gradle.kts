@@ -1,15 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
-    namespace = "com.example.beautyhub"
-    compileSdk = 36
+    namespace = "com.example.travelog"
+    compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.beautyhub"
+        applicationId = "com.example.travelog"
         minSdk = 34
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -44,6 +45,22 @@ dependencies {
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation (libs.okhttp)
+    // BOM
+    implementation(platform(libs.firebase.bom))
+
+
+// Firebase (ללא גרסאות)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.ai)
+
+
+// One-shot (Guava ListenableFuture)
+    implementation(libs.guava)
+
+
+// Streaming (Reactive Streams Publisher)
+    implementation(libs.reactive.streams)
 
 
 }

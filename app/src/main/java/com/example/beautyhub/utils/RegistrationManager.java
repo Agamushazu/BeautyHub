@@ -1,4 +1,4 @@
-package com.example.travelog.utils;
+package com.example.beautyhub.utils;
 
 import android.app.Activity;
 import android.text.TextUtils;

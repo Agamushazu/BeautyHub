@@ -1,4 +1,4 @@
-package com.example.travelog;
+package com.example.beautyhub;
 
 import android.os.Bundle;
 import android.view.View;
@@ -18,8 +18,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.travelog.utils.PostsAdapter;
-import com.example.travelog.utils.TravelPost;
+import com.example.beautyhub.utils.PostsAdapter;
+import com.example.beautyhub.utils.TravelPost;
 import com.google.firebase.auth.FirebaseAuth;
 
 // ⭐ ייבואי Firestore נדרשים
@@ -94,7 +94,7 @@ public class FeedActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 FirebaseAuth.getInstance().signOut();
-                Intent intent = new Intent(FeedActivity.this, com.example.travelog.LoginActivity.class);
+                Intent intent = new Intent(FeedActivity.this, com.example.beautyhub.LoginActivity.class);
                 startActivity(intent);
                 Toast.makeText(FeedActivity.this, "Logging out...", Toast.LENGTH_SHORT).show();
                 finish();
