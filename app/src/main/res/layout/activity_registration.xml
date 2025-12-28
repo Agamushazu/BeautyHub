@@ -1,84 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    tools:context=".RegistrationActivity">
-
-    <EditText
-        android:id="@+id/et_email"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:layout_marginBottom="8dp"/>
-
-    <EditText
-        android:id="@+id/et_password"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:layout_marginBottom="8dp"/>
+    android:background="#FDF0F0"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <ImageView
-            android:id="@+id/iv_profile_picture"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:src="@android:drawable/ic_menu_camera"
-            android:layout_marginEnd="16dp"/>
-
-        <Button
-            android:id="@+id/btn_choose_picture"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Choose Picture"
-            android:padding="8dp"/>
+            android:layout_marginTop="30dp"
+            android:text="BeautyHub"
+            android:textColor="#A64452"
+            android:textSize="50sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_marginBottom="40dp"
+            android:text="Register"
+            android:textColor="#000000"
+            android:textSize="50sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/et_nickname"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/input_field_rounded"
+            android:drawableStart="@android:drawable/ic_menu_myplaces"
+            android:drawablePadding="12dp"
+            android:hint="Name"
+            android:paddingHorizontal="16dp"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/et_email"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/input_field_rounded"
+            android:drawableStart="@android:drawable/ic_dialog_email"
+            android:drawablePadding="12dp"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:paddingHorizontal="16dp"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/et_password"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/input_field_rounded"
+            android:drawableStart="@android:drawable/ic_lock_idle_lock"
+            android:drawablePadding="12dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:paddingHorizontal="16dp"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/btn_register"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:backgroundTint="#A64452"
+            android:text="Sign up"
+            android:textAllCaps="false"
+            android:textSize="22sp"
+            app:cornerRadius="35dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:text="Already have an account?"
+            android:textColor="#D19393"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_back_to_login"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#F4C2C2"
+            android:text="Log in"
+            android:textAllCaps="false"
+            android:textColor="#333333"
+            android:textSize="20sp"
+            app:cornerRadius="35dp" />
 
     </LinearLayout>
-
-    <EditText
-        android:id="@+id/et_nickname"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nickname"
-        android:inputType="textPersonName"
-        android:layout_marginBottom="8dp"/>
-
-    <EditText
-        android:id="@+id/et_age"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Age"
-        android:inputType="number"
-        android:layout_marginBottom="16dp"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Travel Enthusiast Level"
-        android:layout_marginTop="8dp"/>
-
-    <Spinner
-        android:id="@+id/spinner_level"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btn_register"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Register"
-        android:backgroundTint="#EB7A9FFF" />
-
-</LinearLayout>
+</ScrollView>
