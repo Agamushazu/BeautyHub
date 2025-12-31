@@ -12,94 +12,98 @@
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="32dp">
+
+        <ImageView
+            android:id="@+id/iv_lipstick_logo"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginTop="60dp"
+            android:layout_marginBottom="10dp"
+            android:src="@drawable/ic_lipstick"
+            android:contentDescription="Lipstick Logo" />
 
         <TextView
+            android:id="@+id/textView_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:text="BeautyHub"
+            android:fontFamily="serif"
+            android:text="Beauty\nHub"
+            android:textAlignment="center"
             android:textColor="#A64452"
-            android:textSize="50sp"
+            android:textSize="48sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:layout_marginBottom="40dp"
-            android:text="Register"
-            android:textColor="#000000"
-            android:textSize="50sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
+            android:text="Create Account"
+            android:textColor="#333333"
+            android:textSize="18sp" />
 
         <EditText
             android:id="@+id/et_nickname"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/input_field_rounded"
-            android:drawableStart="@android:drawable/ic_menu_myplaces"
-            android:drawablePadding="12dp"
-            android:hint="Name"
-            android:paddingHorizontal="16dp"
-            android:textSize="18sp" />
+            android:hint="Full Name"
+            android:inputType="textPersonName"
+            android:paddingStart="20dp"
+            android:textSize="16sp" />
 
         <EditText
             android:id="@+id/et_email"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/input_field_rounded"
-            android:drawableStart="@android:drawable/ic_dialog_email"
-            android:drawablePadding="12dp"
             android:hint="Email"
             android:inputType="textEmailAddress"
-            android:paddingHorizontal="16dp"
-            android:textSize="18sp" />
+            android:paddingStart="20dp"
+            android:textSize="16sp" />
 
         <EditText
             android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginBottom="30dp"
+            android:layout_marginBottom="32dp"
             android:background="@drawable/input_field_rounded"
-            android:drawableStart="@android:drawable/ic_lock_idle_lock"
-            android:drawablePadding="12dp"
             android:hint="Password"
             android:inputType="textPassword"
-            android:paddingHorizontal="16dp"
-            android:textSize="18sp" />
+            android:paddingStart="20dp"
+            android:textSize="16sp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_register"
             android:layout_width="match_parent"
-            android:layout_height="65dp"
+            android:layout_height="60dp"
             android:backgroundTint="#A64452"
-            android:text="Sign up"
+            android:text="Sign Up"
             android:textAllCaps="false"
-            android:textSize="22sp"
-            app:cornerRadius="35dp" />
+            android:textSize="20sp"
+            app:cornerRadius="30dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="24dp"
             android:text="Already have an account?"
-            android:textColor="#D19393"
-            android:textSize="16sp" />
+            android:textColor="#777777" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_back_to_login"
             android:layout_width="match_parent"
-            android:layout_height="65dp"
+            android:layout_height="60dp"
             android:layout_marginTop="8dp"
             android:backgroundTint="#F4C2C2"
-            android:text="Log in"
+            android:text="Log In"
             android:textAllCaps="false"
             android:textColor="#333333"
-            android:textSize="20sp"
-            app:cornerRadius="35dp" />
+            android:textSize="18sp"
+            app:cornerRadius="30dp" />
 
     </LinearLayout>
 </ScrollView>

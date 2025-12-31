@@ -7,42 +7,57 @@
     android:background="#FDF0F0"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="32dp">
+
+    <ImageView
+        android:id="@+id/iv_lipstick_logo"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/ic_lipstick"
+        android:contentDescription="Lipstick Logo" />
 
     <TextView
         android:id="@+id/textView_brand"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:text="BeautyHub"
+        android:fontFamily="serif"
+        android:text="Beauty\nHub"
+        android:textAlignment="center"
         android:textColor="#A64452"
-        android:textSize="50sp"
+        android:textSize="48sp"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/textView_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:layout_marginBottom="40dp"
-        android:text="Log in"
-        android:textColor="#000000"
-        android:textSize="50sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="16dp"
+        android:text="Welcome to Beauty Hub"
+        android:textColor="#333333"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="A personalized makeup\nrecommendation app based on\nyour unique features."
+        android:textColor="#555555"
+        android:textSize="16sp" />
 
     <EditText
         android:id="@+id/et_email"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="12dp"
         android:background="@drawable/input_field_rounded"
         android:drawableStart="@android:drawable/ic_dialog_email"
         android:drawablePadding="12dp"
         android:hint="Email"
         android:inputType="textEmailAddress"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textSize="18sp" />
+        android:paddingStart="20dp" />
 
     <EditText
         android:id="@+id/et_password"
@@ -54,9 +69,7 @@
         android:drawablePadding="12dp"
         android:hint="Password"
         android:inputType="textPassword"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textSize="18sp" />
+        android:paddingStart="20dp" />
 
     <Button
         android:id="@+id/btn_login"
@@ -71,21 +84,19 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="24dp"
         android:text="Don't have an account?"
-        android:textColor="#D19393"
-        android:textSize="14sp" />
+        android:textColor="#777777" />
 
-    <Button
+    <TextView
         android:id="@+id/link_register"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#F4C2C2"
-        android:text="Sign up"
-        android:textAllCaps="false"
-        android:textColor="#333333"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Sign Up"
+        android:textColor="#A64452"
         android:textSize="18sp"
-        app:cornerRadius="30dp" />
+        android:textStyle="bold"
+        android:padding="8dp"/>
 
 </LinearLayout>

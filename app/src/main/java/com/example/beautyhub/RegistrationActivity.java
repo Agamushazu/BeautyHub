@@ -10,11 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
 import com.example.beautyhub.utils.RegistrationManager;
 
 public class RegistrationActivity extends AppCompatActivity {
-
     private EditText emailEditText, passwordEditText, nicknameEditText;
 
     @Override
@@ -29,48 +27,34 @@ public class RegistrationActivity extends AppCompatActivity {
             return insets;
         });
 
-        // אתחול שדות (מבוסס על התמונה)
-        nicknameEditText = findViewById(R.id.et_nickname); // שדה Name
+        nicknameEditText = findViewById(R.id.et_nickname);
         emailEditText = findViewById(R.id.et_email);
         passwordEditText = findViewById(R.id.et_password);
+        Button registerButton = findViewById(R.id.btn_register);
+        Button backToLogin = findViewById(R.id.btn_back_to_login);
 
-        Button registerButton = findViewById(R.id.btn_register); // כפתור Sign up בורדו
-        Button backToLoginButton = findViewById(R.id.btn_back_to_login); // כפתור Log in ורוד
+        registerButton.setOnClickListener(v -> {
+            String email = emailEditText.getText().toString().trim();
+            String pass = passwordEditText.getText().toString().trim();
+            String name = nicknameEditText.getText().toString().trim();
 
-        // לחיצה על Sign up
-        registerButton.setOnClickListener(v -> registerButtonClick());
+            if (email.isEmpty() || pass.isEmpty() || name.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        // לחיצה על Log in (מעבר חזרה למסך הקודם)
-        backToLoginButton.setOnClickListener(v -> {
-            Intent intent = new Intent(RegistrationActivity.this, LoginActivity.class);
-            startActivity(intent);
-            finish();
+            new RegistrationManager(this).startRegistration(email, pass, name, 0, 0, null,
+                    (success, message) -> {
+                        if (success) {
+                            Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(this, LoginActivity.class));
+                            finish();
+                        } else {
+                            Toast.makeText(this, "Error: " + message, Toast.LENGTH_LONG).show();
+                        }
+                    });
         });
-    }
 
-    private void registerButtonClick() {
-        String email = emailEditText.getText().toString().trim();
-        String pass = passwordEditText.getText().toString().trim();
-        String name = nicknameEditText.getText().toString().trim();
-
-        if (email.isEmpty() || pass.isEmpty() || name.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // כאן אתה קורא ל-RegistrationManager שלך
-        // שים לב: הורדתי את ה-age וה-level כדי להתאים למסך החדש בתמונה
-        RegistrationManager registrationManager = new RegistrationManager(this);
-        registrationManager.startRegistration(
-                email, pass, name, 0, 0, null, // ערכי ברירת מחדל למה שלא בתמונה
-                (success, message) -> {
-                    if (success) {
-                        Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Error: " + message, Toast.LENGTH_LONG).show();
-                    }
-                });
+        backToLogin.setOnClickListener(v -> finish());
     }
 }
