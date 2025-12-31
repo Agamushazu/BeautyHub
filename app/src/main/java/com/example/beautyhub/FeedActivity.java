@@ -1,13 +1,11 @@
 package com.example.beautyhub;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.content.Intent;
-import android.util.Log;
-import android.content.SharedPreferences;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
@@ -20,36 +18,23 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.beautyhub.utils.PostsAdapter;
 import com.example.beautyhub.utils.TravelPost;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-
-// ⭐ ייבואי Firestore נדרשים
 import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FeedActivity extends AppCompatActivity {
 
-    private static final String TAG = "FeedActivity";
-
     private String nickname;
-    private int age;
     private int level;
-
     private List<TravelPost> posts;
-
     private TextView tvTitle;
     private Button btnLogout;
-    private Button btnAddPost;
-    private Button btnGoToPost;
-
-
     private RecyclerView recyclerView;
     private PostsAdapter postsAdapter;
 
@@ -58,57 +43,47 @@ public class FeedActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_feed);
+
+        // הגדרת ריווחים למערכת
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
+        // חיבור רכיבים
         tvTitle = findViewById(R.id.tv_title);
         btnLogout = findViewById(R.id.btn_logout);
-        btnAddPost = findViewById(R.id.btn_add_post);
-        btnGoToPost = findViewById(R.id.btn_gotoposts);
-
-        btnGoToPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(FeedActivity.this, MyPostsActivity.class);
-                startActivity(intent);
-                Toast.makeText(FeedActivity.this, "Navigating to My Post screen...", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-
-        btnAddPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(FeedActivity.this, AddPostActivity.class);
-                startActivity(intent);
-                Toast.makeText(FeedActivity.this, "Navigating to Add Post screen...", Toast.LENGTH_SHORT).show();
-            }
-        });
+        FloatingActionButton btnAddPost = findViewById(R.id.btn_add_post);
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         // לוגיקת Logout
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                Intent intent = new Intent(FeedActivity.this, com.example.beautyhub.LoginActivity.class);
-                startActivity(intent);
-                Toast.makeText(FeedActivity.this, "Logging out...", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(FeedActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
 
+        // ניווט תחתון
+        bottomNav.setSelectedItemId(R.id.nav_feed);
+        bottomNav.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_profile) {
+                startActivity(new Intent(FeedActivity.this, ProfileActivity.class));
+                return true;
+            }
+            return item.getItemId() == R.id.nav_feed;
+        });
+
+        btnAddPost.setOnClickListener(v -> startActivity(new Intent(this, AddPostActivity.class)));
+
+        // טעינת נתונים
         readUserData();
         tvTitle.setText(nickname + " (lvl. " + level + ")");
-
         posts = new ArrayList<>();
-
-        // זימון אתחול RecyclerView
         initRecyclerView();
-        registerToNewPosts(); /////
+        registerToNewPosts();
     }
 
     private void initRecyclerView() {
@@ -118,49 +93,25 @@ public class FeedActivity extends AppCompatActivity {
         recyclerView.setAdapter(postsAdapter);
     }
 
-
-
-    private void readUserData(){
-        Log.d(TAG, "readUserData: start");
+    private void readUserData() {
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
         nickname = sharedPreferences.getString("nickname", "N/A");
-        age = sharedPreferences.getInt("age", 0);
         level = sharedPreferences.getInt("level", 0);
     }
 
     private void registerToNewPosts() {
-        Log.d(TAG, "registerToNewPosts: start");
-
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("posts")
-                .orderBy("createdAt", Query.Direction.ASCENDING)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot snapshots,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (e != null) {
-                            Log.w(TAG, "listen:error", e);
-                            return;
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null || snapshots == null) return;
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        if (dc.getType() == DocumentChange.Type.ADDED) {
+                            TravelPost post = dc.getDocument().toObject(TravelPost.class);
+                            posts.add(0, post);
                         }
-
-                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                            switch (dc.getType()) {
-                                case ADDED:
-                                    Log.d(TAG, "New post: " + dc.getDocument().getData());
-                                    TravelPost post = dc.getDocument().toObject(TravelPost.class);
-                                    posts.add(0,post);
-                                    break;
-                                case MODIFIED:
-                                    Log.d(TAG, "Modified post: " + dc.getDocument().getData());
-                                    break;
-                                case REMOVED:
-                                    Log.d(TAG, "Removed post: " + dc.getDocument().getData());
-                                    break;
-                            }
-                        }
-                        postsAdapter.notifyDataSetChanged();
                     }
+                    postsAdapter.notifyDataSetChanged();
                 });
     }
-
 }

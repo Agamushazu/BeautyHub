@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FDF0F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personal Information"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:layout_gravity="center"
+            android:layout_marginBottom="32dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. Eye Color:"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:textSize="16sp"/>
+        <Spinner
+            android:id="@+id/spinner_eye_color"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="20dp"
+            android:background="@android:drawable/btn_dropdown"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. Skin Tone:"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:textSize="16sp"/>
+        <Spinner
+            android:id="@+id/spinner_skin_tone"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="20dp"
+            android:background="@android:drawable/btn_dropdown"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3. Face Shape:"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:textSize="16sp"/>
+        <Spinner
+            android:id="@+id/spinner_face_shape"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="20dp"
+            android:background="@android:drawable/btn_dropdown"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4. Lips Size:"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:textSize="16sp"/>
+        <Spinner
+            android:id="@+id/spinner_lips_size"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="20dp"
+            android:background="@android:drawable/btn_dropdown"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="5. Hair Color:"
+            android:textStyle="bold"
+            android:textColor="#3E2723"
+            android:textSize="16sp"/>
+        <Spinner
+            android:id="@+id/spinner_hair_color"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:layout_marginBottom="32dp"
+            android:background="@android:drawable/btn_dropdown"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_info"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:text="SAVE INFORMATION"
+            android:backgroundTint="#A64452"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</ScrollView>
