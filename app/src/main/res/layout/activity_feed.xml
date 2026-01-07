@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FDF0F0"
-    tools:context=".FeedActivity">
+    android:background="#FDF0F0">
 
     <RelativeLayout
         android:id="@+id/header_layout"
@@ -19,22 +17,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:text="Feed"
             android:textColor="#3E2723"
             android:textSize="20sp"
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_logout"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_alignParentEnd="true"
-            android:backgroundTint="#A64452"
+            android:backgroundTint="#D86B8C"
             android:text="Logout"
             android:textColor="#FFFFFF"
             android:textSize="11sp"
-            app:cornerRadius="20dp" />
+            app:cornerRadius="20dp"
+            app:icon="@drawable/ic_logout"
+            app:iconGravity="textStart"
+            app:iconSize="14dp"
+            app:iconTint="#FFFFFF" />
     </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -43,7 +43,6 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/action_area"
         android:layout_below="@id/header_layout"
-        android:clipToPadding="false"
         android:padding="8dp" />
 
     <LinearLayout
@@ -55,7 +54,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_gotoposts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,7 +62,8 @@
             android:backgroundTint="#F4C2C2"
             android:text="My Posts"
             android:textColor="#3E2723"
-            android:textSize="10sp" />
+            android:textSize="10sp"
+            app:cornerRadius="15dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btn_add_post"
@@ -80,7 +80,6 @@
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
         android:background="#FFFFFF"
-        app:elevation="8dp"
         app:menu="@menu/bottom_nav_menu" />
 
 </RelativeLayout>

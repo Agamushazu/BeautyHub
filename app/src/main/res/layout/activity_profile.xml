@@ -35,7 +35,7 @@
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             app:cornerRadius="20dp"
-            app:icon="@drawable/ic_logout_custom"
+            app:icon="@drawable/ic_logout"
             app:iconTint="#FFFFFF" />
     </RelativeLayout>
 

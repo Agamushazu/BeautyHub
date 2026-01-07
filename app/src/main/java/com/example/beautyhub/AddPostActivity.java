@@ -1,98 +1,107 @@
 package com.example.beautyhub;
 
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.Button;
+import android.provider.MediaStore;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import com.example.beautyhub.utils.TravelPost;
+import com.example.beautyhub.utils.BeautyPost;
+import com.example.beautyhub.utils.SupabaseStorageHelper;
+import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.Timestamp;
-import java.util.Date;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 public class AddPostActivity extends AppCompatActivity {
 
-    private static final String TAG = "AddPostActivity";
-
-    private EditText etTitle;
-    private EditText etDescription;
-    private Button btnSubmitPost;
+    private EditText etTitle, etDescription;
+    private ImageView ivSelectedImage;
+    private Uri selectedImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_add_post);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         etTitle = findViewById(R.id.et_post_title);
         etDescription = findViewById(R.id.et_post_description);
-        btnSubmitPost = findViewById(R.id.btn_submit_post);
+        ivSelectedImage = findViewById(R.id.iv_selected_image);
+        MaterialButton btnSubmit = findViewById(R.id.btn_submit_post);
+        MaterialButton btnPickImage = findViewById(R.id.btn_pick_image);
 
-        btnSubmitPost.setOnClickListener(v -> {
-            if (validateForm()) {
-                sendPost();
-            }
+        ActivityResultLauncher<Intent> launcher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        selectedImageUri = result.getData().getData();
+                        ivSelectedImage.setImageURI(selectedImageUri);
+                        ivSelectedImage.setVisibility(View.VISIBLE);
+                    }
+                }
+        );
+
+        btnPickImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            launcher.launch(intent);
         });
+
+        btnSubmit.setOnClickListener(v -> validateAndUpload());
     }
 
-    private boolean validateForm() {
+    private void validateAndUpload() {
         String title = etTitle.getText().toString().trim();
-        String description = etDescription.getText().toString().trim();
-        if (title.isEmpty() || description.isEmpty()) {
-            Toast.makeText(this, "Please enter both title and content.", Toast.LENGTH_SHORT).show();
-            return false;
+        String desc = etDescription.getText().toString().trim();
+
+        if (title.isEmpty() || desc.isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
         }
-        return true;
+
+        if (selectedImageUri != null) {
+            File file = getFileFromUri(selectedImageUri);
+            String fileName = "posts/" + System.currentTimeMillis() + ".jpg";
+            SupabaseStorageHelper.uploadPicture(file, fileName, (success, url, error) -> {
+                if (success) savePost(title, desc, url);
+                else Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            savePost(title, desc, "");
+        }
     }
 
-    private TravelPost createTravelPost() {
-        String title = etTitle.getText().toString().trim();
-        String description = etDescription.getText().toString().trim();
+    private void savePost(String title, String desc, String imageUrl) {
+        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
+        String nickname = sp.getString("nickname", "User");
+        String uid = FirebaseAuth.getInstance().getUid();
 
-        String ownerUid = FirebaseAuth.getInstance().getCurrentUser() != null ?
-                FirebaseAuth.getInstance().getCurrentUser().getUid() :
-                "unknown_uid";
-
-        SharedPreferences sharedPreferences = getSharedPreferences("userInfo", Context.MODE_PRIVATE);
-        String ownerNickname = sharedPreferences.getString("nickname", "N/A");
-
-        Timestamp createdAt = new Timestamp(new Date());
-
-        return new TravelPost(title, description, ownerUid, ownerNickname, createdAt);
-    }
-
-    private void sendPost() {
-        Log.d(TAG, "sendPost: start");
-        TravelPost post = createTravelPost();
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("posts")
-                .add(post)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
-                    Toast.makeText(AddPostActivity.this, "Post saved successfully!", Toast.LENGTH_SHORT).show();
+        BeautyPost post = new BeautyPost(title, desc, uid, nickname, Timestamp.now(), imageUrl);
+        FirebaseFirestore.getInstance().collection("posts").add(post)
+                .addOnSuccessListener(doc -> {
+                    Toast.makeText(this, "Post Published!", Toast.LENGTH_SHORT).show();
                     finish();
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "Error adding document", e);
-                    Toast.makeText(AddPostActivity.this, "Error saving post: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
-        Log.d(TAG, "sendPost: done");
+    }
+
+    private File getFileFromUri(Uri uri) {
+        try {
+            File tempFile = new File(getCacheDir(), "temp_image.jpg");
+            InputStream is = getContentResolver().openInputStream(uri);
+            FileOutputStream os = new FileOutputStream(tempFile);
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) os.write(buffer, 0, bytesRead);
+            os.close(); is.close();
+            return tempFile;
+        } catch (Exception e) { return null; }
     }
 }
