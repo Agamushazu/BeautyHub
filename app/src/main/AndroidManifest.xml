@@ -20,6 +20,7 @@
         <activity android:name=".ProfileActivity" android:exported="false" />
         <activity android:name=".FeedActivity" android:exported="false" />
         <activity android:name=".RegistrationActivity" android:exported="false" />
+        <activity android:name=".TipsActivity" />
 
         <activity
             android:name=".LoginActivity"

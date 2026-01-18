@@ -1,7 +1,6 @@
 package com.example.beautyhub;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,7 +10,6 @@ import com.example.beautyhub.utils.PostsAdapter;
 import com.example.beautyhub.utils.BeautyPost;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -21,7 +19,7 @@ import java.util.List;
 public class FeedActivity extends AppCompatActivity {
 
     private List<BeautyPost> posts;
-    private Button btnLogout, btnMyPosts;
+    private Button btnMyPosts;
     private RecyclerView recyclerView;
     private PostsAdapter postsAdapter;
     private FirebaseFirestore db;
@@ -29,7 +27,7 @@ public class FeedActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_feed); // ודאי שה-XML מעודכן עם ID main או מחקי את ViewCompat
+        setContentView(R.layout.activity_feed);
 
         db = FirebaseFirestore.getInstance();
         posts = new ArrayList<>();
@@ -41,7 +39,6 @@ public class FeedActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        btnLogout = findViewById(R.id.btn_logout);
         btnMyPosts = findViewById(R.id.btn_gotoposts);
         recyclerView = findViewById(R.id.recycler_posts);
     }
@@ -53,12 +50,6 @@ public class FeedActivity extends AppCompatActivity {
     }
 
     private void setupClickListeners() {
-        btnLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-        });
-
         btnMyPosts.setOnClickListener(v -> startActivity(new Intent(this, MyPostsActivity.class)));
 
         FloatingActionButton btnAddPost = findViewById(R.id.btn_add_post);
@@ -67,11 +58,15 @@ public class FeedActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_feed);
         bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_profile) {
+            int id = item.getItemId();
+            if (id == R.id.nav_profile) {
                 startActivity(new Intent(this, ProfileActivity.class));
                 return true;
+            } else if (id == R.id.nav_tips) {
+                startActivity(new Intent(this, TipsActivity.class));
+                return true;
             }
-            return item.getItemId() == R.id.nav_feed;
+            return id == R.id.nav_feed;
         });
     }
 

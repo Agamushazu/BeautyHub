@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- הסדר הוא משמאל לימין בקוד, מה שיוצג כ-Profile בצד שמאל ו-Tips בצד ימין -->
     <item
         android:id="@+id/nav_profile"
-        android:icon="@android:drawable/ic_menu_edit"
-        android:title="PROFILE" />
+        android:icon="@drawable/ic_nav_profile"
+        android:title="Profile" />
     <item
         android:id="@+id/nav_feed"
-        android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="FEED" />
+        android:icon="@drawable/ic_nav_feed"
+        android:title="Feed" />
     <item
         android:id="@+id/nav_build_look"
-        android:icon="@android:drawable/ic_menu_compass"
-        android:title="BUILD YOUR LOOK" />
+        android:icon="@drawable/ic_nav_build_look"
+        android:title="Build" />
     <item
         android:id="@+id/nav_tips"
-        android:icon="@android:drawable/ic_menu_help"
-        android:title="TIPS" />
+        android:icon="@drawable/ic_nav_tips"
+        android:title="Tips" />
 </menu>

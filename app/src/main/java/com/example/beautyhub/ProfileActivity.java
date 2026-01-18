@@ -29,9 +29,14 @@ public class ProfileActivity extends AppCompatActivity {
 
         bottomNav.setSelectedItemId(R.id.nav_profile);
         bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_feed) {
+            int id = item.getItemId();
+            if (id == R.id.nav_feed) {
                 startActivity(new Intent(this, FeedActivity.class));
                 finish();
+                return true;
+            } else if (id == R.id.nav_tips) {
+                startActivity(new Intent(this, TipsActivity.class));
+                // לא עושים finish כדי שהמשתמש יוכל לחזור לפרופיל עם כפתור אחורה
                 return true;
             }
             return true;

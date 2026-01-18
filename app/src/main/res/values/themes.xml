@@ -1,5 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.BeautyHub" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#A64452</item>
     </style>
 
     <style name="Theme.BeautyHub" parent="Base.Theme.BeautyHub" />
@@ -7,5 +8,4 @@
     <style name="CircleImage">
         <item name="cornerSize">50%</item>
     </style>
-
 </resources>
