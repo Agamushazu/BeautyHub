@@ -12,7 +12,6 @@ okhttp = "4.12.0"
 retrofit = "3.0.0"
 glide = "4.16.0"
 firebase-bom = "34.4.0"
-guava = "31.0.1-android"
 reactivestreams = "1.0.4"
 
 
@@ -37,7 +36,6 @@ firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 
 
 # ספריות נוספות עם גרסה ישירה
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
 reactive-streams = { module = "org.reactivestreams:reactive-streams", version.ref = "reactivestreams" }
 
 

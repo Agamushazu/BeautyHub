@@ -82,9 +82,12 @@ public class AddPostActivity extends AppCompatActivity {
     private void savePost(String title, String desc, String imageUrl) {
         SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
         String nickname = sp.getString("nickname", "User");
+        String profileImageUrl = sp.getString("profileImageUrl", ""); // משיכת תמונת הפרופיל
         String uid = FirebaseAuth.getInstance().getUid();
 
-        BeautyPost post = new BeautyPost(title, desc, uid, nickname, Timestamp.now(), imageUrl);
+        // עדכון יצירת הפוסט עם 7 פרמטרים (כולל תמונת פרופיל)
+        BeautyPost post = new BeautyPost(title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl);
+        
         FirebaseFirestore.getInstance().collection("posts").add(post)
                 .addOnSuccessListener(doc -> {
                     Toast.makeText(this, "Post Published!", Toast.LENGTH_SHORT).show();

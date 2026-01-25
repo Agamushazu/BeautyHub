@@ -16,10 +16,9 @@ public interface SupabaseStorageService {
     Call<ResponseBody> uploadFile(
             @Header("apikey") String apiKey,
             @Header("Authorization") String authorization,
+            @Header("x-upsert") String upsert, // הוספנו תמיכה בדריסה
             @Path("bucket") String bucket,
             @Path("filename") String filename,
             @Part MultipartBody.Part file
     );
 }
-
-

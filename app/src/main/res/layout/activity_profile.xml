@@ -40,13 +40,25 @@
             android:id="@+id/iv_user_profile_pic"
             android:layout_width="140dp"
             android:layout_height="140dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="8dp"
             android:padding="2dp"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_camera"
             app:shapeAppearanceOverlay="@style/CircleImage"
             app:strokeColor="#A64452"
             app:strokeWidth="3dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_set_profile_pic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#A64452"
+            android:text="Set As Profile Picture"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:cornerRadius="20dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_personal_info"

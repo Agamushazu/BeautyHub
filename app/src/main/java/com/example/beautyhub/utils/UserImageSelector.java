@@ -30,7 +30,12 @@ public class UserImageSelector {
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private ActivityResultLauncher<Intent> cameraLauncher;
+    private OnImageSelectedListener listener;
     private static final String TAG = "UserImageSelector";
+
+    public interface OnImageSelectedListener {
+        void onImageSelected();
+    }
 
     public UserImageSelector(AppCompatActivity activity, ImageView imageView){
         this.activity = activity;
@@ -39,6 +44,11 @@ public class UserImageSelector {
         this.imageBitmap = null;
         initResultLaunchers();
     }
+
+    public void setOnImageSelectedListener(OnImageSelectedListener listener) {
+        this.listener = listener;
+    }
+
     public void showImageSourceDialog() {
         String[] options = {"Take Photo", "Choose from Gallery"};
         new AlertDialog.Builder(activity)
@@ -87,7 +97,9 @@ public class UserImageSelector {
                     if (uri != null) {
                         Log.d(TAG, "PhotoPicker: Selected URI: " + uri);
                         this.imageUri = uri;
+                        this.imageBitmap = null; // Clear bitmap if URI is picked
                         imageView.setImageURI(uri);
+                        if (listener != null) listener.onImageSelected();
                     } else {
                         Log.d(TAG, "PhotoPicker: No media selected");
                     }
@@ -104,8 +116,10 @@ public class UserImageSelector {
                         Bitmap bitmap = (Bitmap) data.getExtras().get("data");
                         if (bitmap != null) {
                             Log.d(TAG, "setting bitmap");
+                            this.imageUri = null; // Clear URI if bitmap is taken
                             imageView.setImageBitmap(bitmap);
                             this.imageBitmap = bitmap;
+                            if (listener != null) listener.onImageSelected();
                         } else {
                             Log.e(TAG, "Error retrieving image from camera intent");
                         }
@@ -136,5 +150,3 @@ public class UserImageSelector {
     }
 
 }
-
-

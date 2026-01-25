@@ -18,15 +18,15 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SupabaseStorageHelper {
     private static final String supabaseUrl = "https://ijlqhxxhetmhakdakmzh.supabase.co";
 
-    private static final String supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqbHFoeHhoZXRtaGFrZGFrbXpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwODY5MzEsImV4cCI6MjA4MDY2MjkzMX0.V9LHaFA8ncP36YeV_FV-tyZ3TWhwc-C6mjeJFmBzWUc";
+    private static final String supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqbHFoeHhoZXRtaGFrZGFrmXpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUwODY5MzEsImV4cCI6MjA4MDY2MjkzMX0.V9LHaFA8ncP36YeV_FV-tyZ3TWhwc-C6mjeJFmBzWUc";
 
+    // וודאי שזה שם ה-Bucket המדויק שיצרת ב-Supabase Storage
     private static final String SUPABASE_BUCKET = "my-bucket";
 
     private static final String TAG = "SupabaseStorageHelper";
 
     public static void uploadPicture(final File file, final String filePath, OnResultCallback callback) {
         try {
-
             Log.i(TAG, "uploadPicture: Uploading file to Supabase: " + filePath);
 
             OkHttpClient client = new OkHttpClient.Builder().build();
@@ -44,6 +44,7 @@ public class SupabaseStorageHelper {
             Call<ResponseBody> call = service.uploadFile(
                     supabaseKey,
                     bearer,
+                    "true", 
                     SUPABASE_BUCKET,
                     filePath,
                     body
@@ -53,11 +54,17 @@ public class SupabaseStorageHelper {
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
                         String publicUrl =  getFileSupabaseUrl(filePath);
-                        Log.i(TAG, "uploadPicture: Profile picture uploaded successfully to Supabase. Public URL: " + publicUrl);
+                        Log.i(TAG, "uploadPicture: Success. Public URL: " + publicUrl);
                         callback.onResult(true, publicUrl, null);
                     } else {
-                        Log.e(TAG, "uploadPicture: Supabase upload failed: " + response.message());
-                        callback.onResult(false, null, response.message());
+                        String errorMsg = "Error " + response.code() + ": " + response.message();
+                        try {
+                            if (response.errorBody() != null) {
+                                errorMsg += " - " + response.errorBody().string();
+                            }
+                        } catch (Exception e) {}
+                        Log.e(TAG, "uploadPicture: Failed. " + errorMsg);
+                        callback.onResult(false, null, errorMsg);
                     }
                 }
 

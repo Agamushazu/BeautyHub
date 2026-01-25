@@ -10,8 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.beautyhub"
-        // מומלץ להוריד ל-24 כדי שיתמוך ביותר מכשירים, אלא אם אתה חייב API 34
-        minSdk = 35
+        minSdk = 34
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -57,7 +56,5 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
-    // Utilities
-    implementation(libs.guava)
     implementation(libs.reactive.streams)
 }
