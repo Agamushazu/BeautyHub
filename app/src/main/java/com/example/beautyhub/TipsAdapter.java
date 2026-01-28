@@ -40,6 +40,12 @@ public class TipsAdapter extends RecyclerView.Adapter<TipsAdapter.TipViewHolder>
         return filteredList.size();
     }
 
+    public void updateList(List<Tip> newList) {
+        this.tipsList = new ArrayList<>(newList);
+        this.filteredList = new ArrayList<>(newList);
+        notifyDataSetChanged();
+    }
+
     public void filter(String query) {
         filteredList.clear();
         if (query.isEmpty()) {

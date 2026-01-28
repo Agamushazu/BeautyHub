@@ -36,6 +36,17 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Profile"
+            android:textSize="22sp"
+            android:textColor="#3E2723"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"/>
+
+
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_user_profile_pic"
             android:layout_width="140dp"
