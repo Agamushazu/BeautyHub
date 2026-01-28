@@ -47,7 +47,7 @@ public class RegistrationActivity extends AppCompatActivity {
                     (success, message) -> {
                         if (success) {
                             Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                            startActivity(new Intent(this, LoginActivity.class));
+                            startActivity(new Intent(this, WelcomeActivity.class));
                             finish();
                         } else {
                             Toast.makeText(this, "Error: " + message, Toast.LENGTH_LONG).show();

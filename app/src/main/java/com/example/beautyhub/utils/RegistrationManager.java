@@ -100,8 +100,8 @@ public class RegistrationManager {
             saveUserToFirestore();
         } else if (registrationPhase == REGISTRATION_PHASE_DONE) {
             Log.i(TAG, "executeNextPhase: Registration done");
+            // המשתמש נשאר מחובר כאן! לא קוראים ל-auth.signOut()
             onResultCallback.onResult(true, "Registration successful!");
-            auth.signOut();
         }
     }
 

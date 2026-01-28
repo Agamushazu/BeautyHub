@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.beautyhub.utils.SupabaseStorageHelper;
@@ -12,6 +14,7 @@ import com.example.beautyhub.utils.UserImageSelector;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.File;
 
@@ -19,6 +22,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private UserImageSelector imageSelector;
     private ImageView ivUserProfilePic;
+    private TextView tvUsername;
     private MaterialButton btnSetProfilePic;
     private FirebaseFirestore db;
     private String userId;
@@ -32,9 +36,10 @@ public class ProfileActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         userId = FirebaseAuth.getInstance().getUid();
         ivUserProfilePic = findViewById(R.id.iv_user_profile_pic);
+        tvUsername = findViewById(R.id.tv_username);
         btnSetProfilePic = findViewById(R.id.btn_set_profile_pic);
 
-        loadUserProfilePicture();
+        loadUserProfileData();
 
         imageSelector = new UserImageSelector(this, ivUserProfilePic);
         ivUserProfilePic.setOnClickListener(v -> imageSelector.showImageSourceDialog());
@@ -83,15 +88,27 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    private void loadUserProfilePicture() {
+    private void loadUserProfileData() {
+        if (userId == null) return;
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            if (doc.exists() && doc.contains("profileImageUrl")) {
-                String url = doc.getString("profileImageUrl");
-                Glide.with(this).load(url).placeholder(android.R.drawable.ic_menu_camera).into(ivUserProfilePic);
-                getSharedPreferences("userInfo", MODE_PRIVATE).edit()
-                        .putString("profileImageUrl", url).apply();
+            if (doc.exists()) {
+                String nameToDisplay = "";
+                if (doc.contains("nickname")) {
+                    nameToDisplay = doc.getString("nickname");
+                } else if (doc.contains("name")) {
+                    nameToDisplay = doc.getString("name");
+                }
+                
+                if (!nameToDisplay.isEmpty()) {
+                    tvUsername.setText("Hello, " + nameToDisplay + "!");
+                }
+
+                if (doc.contains("profileImageUrl")) {
+                    String url = doc.getString("profileImageUrl");
+                    Glide.with(this).load(url).placeholder(android.R.drawable.ic_menu_camera).into(ivUserProfilePic);
+                }
             }
-        });
+        }).addOnFailureListener(e -> Toast.makeText(this, "Error loading profile", Toast.LENGTH_SHORT).show());
     }
 
     private void setupButtons() {
@@ -100,8 +117,51 @@ public class ProfileActivity extends AppCompatActivity {
         findViewById(R.id.btn_favorites).setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
         findViewById(R.id.btn_sign_out).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
+            getSharedPreferences("userInfo", MODE_PRIVATE).edit().clear().apply();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
+        });
+        findViewById(R.id.btn_delete_account).setOnClickListener(v -> showDeleteAccountDialog());
+    }
+
+    private void showDeleteAccountDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Account")
+                .setMessage("Are you sure you want to delete your account? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteUserAccount())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteUserAccount() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        String uid = user.getUid();
+        
+        user.delete().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                db.collection("users").document(uid).delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, "Account deleted successfully", Toast.LENGTH_SHORT).show();
+                            // איפוס נתונים מקומיים
+                            getSharedPreferences("userInfo", MODE_PRIVATE).edit().clear().apply();
+                            FirebaseAuth.getInstance().signOut();
+                            
+                            // שליחה לעמוד הרשמה כפי שביקשת
+                            Intent intent = new Intent(this, RegistrationActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        })
+                        .addOnFailureListener(e -> {
+                            FirebaseAuth.getInstance().signOut();
+                            startActivity(new Intent(this, RegistrationActivity.class));
+                            finish();
+                        });
+            } else {
+                Toast.makeText(this, "Please logout and login again before deleting account.", Toast.LENGTH_LONG).show();
+            }
         });
     }
 
