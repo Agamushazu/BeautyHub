@@ -14,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BeautyHub">
         <activity
+            android:name=".BuildLookActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProductCollection"
             android:exported="false" />
         <activity

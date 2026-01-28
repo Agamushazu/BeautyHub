@@ -59,11 +59,17 @@ public class FeedActivity extends AppCompatActivity {
         bottomNav.setSelectedItemId(R.id.nav_feed);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_profile) {
-                startActivity(new Intent(this, ProfileActivity.class));
-                return true;
-            } else if (id == R.id.nav_tips) {
-                startActivity(new Intent(this, TipsActivity.class));
+            if (id == R.id.nav_profile) { 
+                startActivity(new Intent(this, ProfileActivity.class)); 
+                finish();
+                return true; 
+            } else if (id == R.id.nav_tips) { 
+                startActivity(new Intent(this, TipsActivity.class)); 
+                finish();
+                return true; 
+            } else if (id == R.id.nav_build_look) {
+                startActivity(new Intent(this, BuildLookActivity.class));
+                finish();
                 return true;
             }
             return id == R.id.nav_feed;

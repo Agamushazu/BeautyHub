@@ -1,6 +1,7 @@
 package com.example.beautyhub;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class PersonalInfoActivity extends AppCompatActivity {
 
     private Spinner spinnerSkin, spinnerEyes, spinnerEyeShape, spinnerFace, spinnerLips, spinnerHair;
-    private MaterialButton btnSave;
+    private MaterialButton btnSave, btnBack;
     private FirebaseFirestore db;
     private String userId;
 
@@ -34,6 +35,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
         loadUserData();
 
         btnSave.setOnClickListener(v -> saveUserData());
+        btnBack.setOnClickListener(v -> finish());
     }
 
     private void initViews() {
@@ -44,6 +46,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
         spinnerLips = findViewById(R.id.spinner_lips_size);
         spinnerHair = findViewById(R.id.spinner_hair_color);
         btnSave = findViewById(R.id.btn_save_info);
+        btnBack = findViewById(R.id.btn_goback);
     }
 
     private void setupAllSpinners() {
@@ -89,7 +92,6 @@ public class PersonalInfoActivity extends AppCompatActivity {
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    // If update fails (e.g. document doesn't exist yet), use set with merge
                     db.collection("users").document(userId).set(userData, com.google.firebase.firestore.SetOptions.merge())
                             .addOnSuccessListener(aVoid -> {
                                 Toast.makeText(this, "Profile Updated!", Toast.LENGTH_SHORT).show();
@@ -109,7 +111,6 @@ public class PersonalInfoActivity extends AppCompatActivity {
 
         db.collection("users").document(userId).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                // Check if there is any data to determine button text
                 boolean hasData = false;
                 
                 if (documentSnapshot.contains("skinTone")) {

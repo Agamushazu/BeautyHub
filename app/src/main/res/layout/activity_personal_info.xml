@@ -53,10 +53,20 @@
                     android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Eye Color:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_eye_color" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="16dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_eye_color" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="16dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Eye Shape:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_eye_shape" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="24dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_eye_shape" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="24dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <!-- FACE & COMPLEXION SECTION -->
                 <TextView 
@@ -74,10 +84,20 @@
                     android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Skin Tone:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_skin_tone" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="16dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_skin_tone" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="16dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Face Shape:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_face_shape" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="24dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_face_shape" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="24dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <!-- LIPS & HAIR SECTION -->
                 <TextView 
@@ -95,10 +115,20 @@
                     android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Lips Size:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_lips_size" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="16dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_lips_size" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="16dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Hair Color:" android:textColor="#7D7D7D" android:textSize="14sp"/>
-                <Spinner android:id="@+id/spinner_hair_color" android:layout_width="match_parent" android:layout_height="45dp" android:layout_marginBottom="24dp" android:background="@android:drawable/btn_dropdown"/>
+                <Spinner 
+                    android:id="@+id/spinner_hair_color" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="24dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_save_info"
@@ -112,6 +142,20 @@
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_goback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="16dp"
+            android:text="Back"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:backgroundTint="#D86B8C"
+            app:cornerRadius="20dp"
+            app:icon="@drawable/ic_arrow_back"
+            app:iconGravity="textStart" />
 
     </LinearLayout>
 </ScrollView>

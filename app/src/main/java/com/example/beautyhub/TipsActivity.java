@@ -114,8 +114,19 @@ public class TipsActivity extends AppCompatActivity {
         bottomNav.setSelectedItemId(R.id.nav_tips);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_feed) { startActivity(new Intent(this, FeedActivity.class)); finish(); return true; }
-            if (id == R.id.nav_profile) { startActivity(new Intent(this, ProfileActivity.class)); finish(); return true; }
+            if (id == R.id.nav_feed) { 
+                startActivity(new Intent(this, FeedActivity.class)); 
+                finish();
+                return true; 
+            } else if (id == R.id.nav_profile) { 
+                startActivity(new Intent(this, ProfileActivity.class)); 
+                finish();
+                return true; 
+            } else if (id == R.id.nav_build_look) {
+                startActivity(new Intent(this, BuildLookActivity.class));
+                finish();
+                return true;
+            }
             return id == R.id.nav_tips;
         });
     }

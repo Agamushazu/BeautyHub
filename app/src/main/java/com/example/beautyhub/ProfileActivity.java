@@ -39,7 +39,6 @@ public class ProfileActivity extends AppCompatActivity {
         imageSelector = new UserImageSelector(this, ivUserProfilePic);
         ivUserProfilePic.setOnClickListener(v -> imageSelector.showImageSourceDialog());
 
-        // שימוש במאזין החדש שיצרנו ב-UserImageSelector
         imageSelector.setOnImageSelectedListener(() -> {
             File file = imageSelector.createImageFile();
             if (file != null) {
@@ -112,6 +111,8 @@ public class ProfileActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_feed) { startActivity(new Intent(this, FeedActivity.class)); finish(); return true; }
+            if (id == R.id.nav_build_look) { startActivity(new Intent(this, BuildLookActivity.class)); finish(); return true; }
+            if (id == R.id.nav_tips) { startActivity(new Intent(this, TipsActivity.class)); finish(); return true; }
             return id == R.id.nav_profile;
         });
     }
