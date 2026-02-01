@@ -2,6 +2,7 @@ package com.example.beautyhub;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -18,6 +19,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -27,6 +29,7 @@ public class AddPostActivity extends AppCompatActivity {
     private EditText etTitle, etDescription;
     private ImageView ivSelectedImage;
     private Uri selectedImageUri;
+    private File photoFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,24 +41,66 @@ public class AddPostActivity extends AppCompatActivity {
         ivSelectedImage = findViewById(R.id.iv_selected_image);
         MaterialButton btnSubmit = findViewById(R.id.btn_submit_post);
         MaterialButton btnPickImage = findViewById(R.id.btn_pick_image);
+        MaterialButton btnTakePhoto = findViewById(R.id.btn_take_photo);
+        MaterialButton btnBack = findViewById(R.id.btn_back);
 
-        ActivityResultLauncher<Intent> launcher = registerForActivityResult(
+        // כפתור חזרה
+        btnBack.setOnClickListener(v -> finish());
+
+        // בחירת תמונה מהגלריה
+        ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         selectedImageUri = result.getData().getData();
                         ivSelectedImage.setImageURI(selectedImageUri);
                         ivSelectedImage.setVisibility(View.VISIBLE);
+                        photoFile = null; // איפוס קובץ מצלמה אם נבחר מהגלריה
+                    }
+                }
+        );
+
+        // צילום תמונה
+        ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Bitmap photo = (Bitmap) result.getData().getExtras().get("data");
+                        ivSelectedImage.setImageBitmap(photo);
+                        ivSelectedImage.setVisibility(View.VISIBLE);
+                        selectedImageUri = null; // איפוס URI גלריה
+                        photoFile = saveBitmapToFile(photo);
                     }
                 }
         );
 
         btnPickImage.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            launcher.launch(intent);
+            galleryLauncher.launch(intent);
+        });
+
+        btnTakePhoto.setOnClickListener(v -> {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            cameraLauncher.launch(intent);
         });
 
         btnSubmit.setOnClickListener(v -> validateAndUpload());
+    }
+
+    private File saveBitmapToFile(Bitmap bitmap) {
+        try {
+            File tempFile = new File(getCacheDir(), "camera_image_" + System.currentTimeMillis() + ".jpg");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+            byte[] bitmapData = bos.toByteArray();
+            FileOutputStream fos = new FileOutputStream(tempFile);
+            fos.write(bitmapData);
+            fos.flush();
+            fos.close();
+            return tempFile;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void validateAndUpload() {
@@ -68,24 +113,29 @@ public class AddPostActivity extends AppCompatActivity {
         }
 
         if (selectedImageUri != null) {
-            File file = getFileFromUri(selectedImageUri);
-            String fileName = "posts/" + System.currentTimeMillis() + ".jpg";
-            SupabaseStorageHelper.uploadPicture(file, fileName, (success, url, error) -> {
-                if (success) savePost(title, desc, url);
-                else Toast.makeText(this, "Upload failed", Toast.LENGTH_SHORT).show();
-            });
+            uploadFile(getFileFromUri(selectedImageUri), title, desc);
+        } else if (photoFile != null) {
+            uploadFile(photoFile, title, desc);
         } else {
             savePost(title, desc, "");
         }
     }
 
+    private void uploadFile(File file, String title, String desc) {
+        if (file == null) return;
+        String fileName = "posts/" + System.currentTimeMillis() + ".jpg";
+        SupabaseStorageHelper.uploadPicture(file, fileName, (success, url, error) -> {
+            if (success) savePost(title, desc, url);
+            else Toast.makeText(this, "Upload failed: " + error, Toast.LENGTH_SHORT).show();
+        });
+    }
+
     private void savePost(String title, String desc, String imageUrl) {
         SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
         String nickname = sp.getString("nickname", "User");
-        String profileImageUrl = sp.getString("profileImageUrl", ""); // משיכת תמונת הפרופיל
+        String profileImageUrl = sp.getString("profileImageUrl", "");
         String uid = FirebaseAuth.getInstance().getUid();
 
-        // עדכון יצירת הפוסט עם 7 פרמטרים (כולל תמונת פרופיל)
         BeautyPost post = new BeautyPost(title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl);
         
         FirebaseFirestore.getInstance().collection("posts").add(post)

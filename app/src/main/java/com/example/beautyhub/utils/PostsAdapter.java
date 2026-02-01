@@ -13,6 +13,7 @@ import com.google.firebase.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
 
@@ -35,17 +36,23 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvOwner.setText("By: " + post.getOwnerNickname());
 
         if (post.getCreatedAt() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, HH:mm", Locale.getDefault());
+            // הגדרת הפורמט עם אזור זמן של ישראל (GMT+2/3)
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            sdf.setTimeZone(TimeZone.getTimeZone("Asia/Jerusalem")); 
             holder.tvDate.setText(sdf.format(post.getCreatedAt().toDate()));
         }
 
         // תמונת פרופיל
-        String profPath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
-        Glide.with(holder.itemView.getContext())
-                .load(SupabaseStorageHelper.getFileSupabaseUrl(profPath))
-                .circleCrop()
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.ivProfile);
+        String profPath = post.getOwnerProfileImageUrl();
+        if (profPath != null && !profPath.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(profPath)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .into(holder.ivProfile);
+        } else {
+            holder.ivProfile.setImageResource(R.drawable.ic_launcher_background);
+        }
 
         // תמונת פוסט
         if (post.getPostImageUrl() != null && !post.getPostImageUrl().isEmpty()) {

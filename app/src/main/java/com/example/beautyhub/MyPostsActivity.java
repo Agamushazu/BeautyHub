@@ -24,21 +24,24 @@ public class MyPostsActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TextView tvTitle;
     private MaterialButton btnBack;
+    private FirebaseFirestore db;
+    private String currentUid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_posts);
 
+        db = FirebaseFirestore.getInstance();
+        currentUid = FirebaseAuth.getInstance().getUid();
+
         tvTitle = findViewById(R.id.tv_title);
         btnBack = findViewById(R.id.btn_goback);
         recyclerView = findViewById(R.id.recycler_posts);
 
-        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
-        String nickname = sp.getString("nickname", "User");
-        tvTitle.setText(nickname + "'s Posts");
+        // טעינת שם המשתמש - קודם מה-SharedPreferences ואז מ-Firestore ליתר ביטחון
+        loadDisplayName();
 
-        // כאן אנחנו סוגרים את המסך וחוזרים אוטומטית ל-Feed
         btnBack.setOnClickListener(v -> finish());
 
         posts = new ArrayList<>();
@@ -49,16 +52,34 @@ public class MyPostsActivity extends AppCompatActivity {
         loadMyPosts();
     }
 
+    private void loadDisplayName() {
+        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
+        String nickname = sp.getString("nickname", "User");
+        tvTitle.setText(nickname + "'s posts");
+
+        if (currentUid != null) {
+            db.collection("users").document(currentUid).get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String firestoreNickname = documentSnapshot.getString("nickname");
+                    if (firestoreNickname != null && !firestoreNickname.isEmpty()) {
+                        tvTitle.setText(firestoreNickname + "'s posts");
+                        // עדכון ה-SP לפעם הבאה
+                        sp.edit().putString("nickname", firestoreNickname).apply();
+                    }
+                }
+            });
+        }
+    }
+
     private void loadMyPosts() {
-        String currentUid = FirebaseAuth.getInstance().getUid();
         if (currentUid == null) return;
 
-        FirebaseFirestore.getInstance().collection("posts")
+        db.collection("posts")
                 .whereEqualTo("ownerUid", currentUid)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
-                        Log.e("MyPosts", "Error. Link in Logcat?", e);
+                        Log.e("MyPosts", "Error loading posts", e);
                         return;
                     }
                     if (snapshots != null) {
