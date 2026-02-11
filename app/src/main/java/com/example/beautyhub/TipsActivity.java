@@ -50,6 +50,11 @@ public class TipsActivity extends AppCompatActivity {
         allTips.add(new Tip("Olive Skin Bronzing", "Get that sun-kissed look for olive skin tones.", android.R.drawable.ic_menu_gallery, Arrays.asList("Olive")));
         allTips.add(new Tip("Bold Red Lips", "Classic look for all face shapes.", android.R.drawable.ic_menu_gallery, Arrays.asList("Full", "Natural")));
         allTips.add(new Tip("Brown Hair Harmony", "Makeup colors that complement brunette hair.", android.R.drawable.ic_menu_gallery, Arrays.asList("Brown")));
+        
+        // New Eyebrow related tips
+        allTips.add(new Tip("Define Arched Brows", "How to emphasize your natural arch for a lifted look.", android.R.drawable.ic_menu_gallery, Arrays.asList("Arched")));
+        allTips.add(new Tip("Straight Brow Trend", "Achieve the youthful 'Korean straight brow' look.", android.R.drawable.ic_menu_gallery, Arrays.asList("Straight")));
+        allTips.add(new Tip("Softening Rounded Brows", "Techniques to define rounded brows without making them look too harsh.", android.R.drawable.ic_menu_gallery, Arrays.asList("Rounded")));
     }
 
     private void setupRecyclerViews() {
@@ -75,10 +80,12 @@ public class TipsActivity extends AppCompatActivity {
                 String eyes = doc.getString("eyeColor");
                 String eyeShape = doc.getString("eyeShape");
                 String hair = doc.getString("hairColor");
+                String eyebrows = doc.getString("eyebrowsShape");
 
                 List<Tip> recommended = new ArrayList<>();
                 for (Tip tip : allTips) {
-                    if (tip.matches(skin, eyes, eyeShape, hair)) {
+                    // Check if tip matches any of the user traits including eyebrows
+                    if (tip.matches(skin, eyes, eyeShape, hair, eyebrows)) {
                         recommended.add(tip);
                     }
                 }
