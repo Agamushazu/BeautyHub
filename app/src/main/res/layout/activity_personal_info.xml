@@ -21,8 +21,62 @@
             android:textColor="#3E2723"
             android:layout_gravity="center"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             android:textStyle="bold"/>
+
+        <!-- PHOTO ANALYSIS SECTION -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="15dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFF5F5">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:gravity="center">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quick Fill with Photo"
+                    android:textColor="#A64452"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"/>
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Upload a selfie and we'll analyze your features!"
+                    android:textColor="#7D7D7D"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="12dp"
+                    android:textAlignment="center"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_upload_photo"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UPLOAD PHOTO"
+                    app:strokeColor="#D36B6B"
+                    android:textColor="#D36B6B"
+                    app:icon="@android:drawable/ic_menu_camera"
+                    app:iconTint="#D36B6B" />
+                    
+                <ProgressBar
+                    android:id="@+id/analysis_progress"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -94,6 +148,14 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Face Shape:" android:textColor="#7D7D7D" android:textSize="14sp"/>
                 <Spinner 
                     android:id="@+id/spinner_face_shape" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="45dp" 
+                    android:layout_marginBottom="16dp" 
+                    android:background="@android:drawable/btn_dropdown"/>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Eyebrows Shape:" android:textColor="#7D7D7D" android:textSize="14sp"/>
+                <Spinner 
+                    android:id="@+id/spinner_eyebrows_shape" 
                     android:layout_width="match_parent" 
                     android:layout_height="45dp" 
                     android:layout_marginBottom="24dp" 
