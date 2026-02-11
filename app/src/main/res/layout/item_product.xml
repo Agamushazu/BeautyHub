@@ -56,7 +56,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/btn_star_big_off"
+            android:src="@drawable/ic_heart_outline"
             app:tint="#A64452" />
 
         <ImageButton

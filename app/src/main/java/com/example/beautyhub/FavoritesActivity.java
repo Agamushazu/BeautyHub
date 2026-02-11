@@ -22,7 +22,7 @@ import java.util.List;
 public class FavoritesActivity extends AppCompatActivity {
 
     private RecyclerView rvFavorites;
-    private TextView tvEmptyMessage;
+    private TextView tvEmptyMessage, tvTitleMyCollection, tvTitleAllProducts;
     private MaterialButton btnBack;
     private List<Product> favoritesList = new ArrayList<>();
     private ProductAdapter adapter;
@@ -33,7 +33,7 @@ public class FavoritesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_product_collection); // Reusing the layout since it fits perfectly
+        setContentView(R.layout.activity_product_collection); 
 
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
@@ -52,33 +52,44 @@ public class FavoritesActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        rvFavorites = findViewById(R.id.rv_products);
-        tvEmptyMessage = findViewById(R.id.tv_empty_message);
+        rvFavorites = findViewById(R.id.rv_all_products); 
+        tvEmptyMessage = findViewById(R.id.tv_empty_my_collection);
         btnBack = findViewById(R.id.btn_goback);
         
-        // Hide things we don't need in Favorites page
+        tvTitleMyCollection = findViewById(R.id.tv_title_my_collection);
+        tvTitleAllProducts = findViewById(R.id.tv_title_all_products);
+        
+        // Hide elements not needed in Favorites
         findViewById(R.id.search_view).setVisibility(View.GONE);
         findViewById(R.id.btn_add_product).setVisibility(View.GONE);
-        ((TextView)findViewById(R.id.tv_title)).setText("My Favorite Products");
+        findViewById(R.id.rv_my_collection).setVisibility(View.GONE);
+        
+        // Update headers to show ONLY "My Favorites"
+        tvTitleMyCollection.setVisibility(View.VISIBLE);
+        tvTitleMyCollection.setText("My Favorites");
+        tvTitleAllProducts.setVisibility(View.GONE);
+        
         tvEmptyMessage.setText("You haven't favorited any products yet!");
     }
 
     private void setupRecyclerView() {
         rvFavorites.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ProductAdapter(favoritesList);
-        // We don't need selection or remove button here, just the heart
         adapter.setMyCollectionMode(false); 
         rvFavorites.setAdapter(adapter);
     }
 
     private void fetchFavorites() {
+        if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId).collection("favorites")
                 .addSnapshotListener((value, error) -> {
                     if (value != null) {
                         favoritesList.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            favoritesList.add(doc.toObject(Product.class));
+                            Product p = doc.toObject(Product.class);
+                            if (p.getId() == null) p.setId(doc.getId());
+                            favoritesList.add(p);
                         }
                         adapter.setProducts(favoritesList);
                         updateEmptyUI();

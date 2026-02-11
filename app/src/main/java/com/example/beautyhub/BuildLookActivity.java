@@ -15,7 +15,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BuildLookActivity extends AppCompatActivity {
@@ -38,7 +37,7 @@ public class BuildLookActivity extends AppCompatActivity {
         userId = FirebaseAuth.getInstance().getUid();
 
         initViews();
-        setupData();
+        loadTipsFromFirestore(); // טעינת הטיפים מה-Firestore במקום setupData
         setupRecyclerView();
         setupBottomNavigation();
         loadUserProducts();
@@ -49,38 +48,20 @@ public class BuildLookActivity extends AppCompatActivity {
         rvResults = findViewById(R.id.rv_look_results);
         tvNoResults = findViewById(R.id.tv_no_results);
         tvResultsTitle = findViewById(R.id.tv_results_title);
+        allTips = new ArrayList<>();
         userProducts = new ArrayList<>();
 
         findViewById(R.id.btn_generate_look).setOnClickListener(v -> generateLook());
     }
 
-    private void setupData() {
-        allTips = new ArrayList<>();
-        // Tips with Traits AND Required Products
-        allTips.add(new Tip("Evening Glam for Brown Eyes", "Use your dark eyeshadows and bold liner.", 
-                android.R.drawable.ic_menu_gallery, 
-                Arrays.asList("Brown", "Evening", "Glam"), 
-                Arrays.asList("Eyeshadow", "Eyeliner")));
-
-        allTips.add(new Tip("Natural Day Look", "Light foundation and nude lips for a fresh feel.", 
-                android.R.drawable.ic_menu_gallery, 
-                Arrays.asList("Natural", "Fair", "Medium"), 
-                Arrays.asList("Foundation", "Lipstick")));
-
-        allTips.add(new Tip("Party Glow", "Highlighter is key! Best for olive skin tones.", 
-                android.R.drawable.ic_menu_gallery, 
-                Arrays.asList("Party", "Olive", "Glow"), 
-                Arrays.asList("Highlighter", "Bronzer")));
-
-        allTips.add(new Tip("Red Carpet Lips", "Deep red lipstick guide for full lips.", 
-                android.R.drawable.ic_menu_gallery, 
-                Arrays.asList("Full", "Evening", "Red"), 
-                Arrays.asList("Lipstick", "Lip liner")));
-
-        allTips.add(new Tip("Office Professional", "Subtle tones for a clean work look.", 
-                android.R.drawable.ic_menu_gallery, 
-                Arrays.asList("Natural", "Work", "Professional"), 
-                Arrays.asList("Mascara", "Concealer")));
+    private void loadTipsFromFirestore() {
+        db.collection("tips").get().addOnSuccessListener(queryDocumentSnapshots -> {
+            allTips.clear();
+            for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                Tip tip = doc.toObject(Tip.class);
+                allTips.add(tip);
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to load tips from database", Toast.LENGTH_SHORT).show());
     }
 
     private void setupRecyclerView() {
@@ -111,18 +92,19 @@ public class BuildLookActivity extends AppCompatActivity {
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
             String skin = doc.getString("skinTone");
             String eyes = doc.getString("eyeColor");
+            String face = doc.getString("faceShape");
+            String brows = doc.getString("eyebrowsShape");
             
             List<Tip> filtered = new ArrayList<>();
             for (Tip tip : allTips) {
-                // 1. Match Style Query
-                boolean matchesStyle = tip.getTitle().toLowerCase().contains(query) || 
-                                       tip.getDescription().toLowerCase().contains(query) ||
-                                       tip.getTags().stream().anyMatch(t -> t.toLowerCase().contains(query));
+                // 1. התאמה לשאילתת החיפוש (כותרת או תיאור מה-Firestore)
+                boolean matchesStyle = (tip.getTitle() != null && tip.getTitle().toLowerCase().contains(query)) || 
+                                       (tip.getDescription() != null && tip.getDescription().toLowerCase().contains(query));
                 
-                // 2. Match Personal Traits (Skin/Eyes)
-                boolean matchesTraits = tip.matches(skin, eyes);
+                // 2. התאמה למאפיינים האישיים (צבע עיניים, עור וכו')
+                boolean matchesTraits = tip.matches(skin, eyes, face, brows);
 
-                // 3. Match Products in Collection
+                // 3. בדיקה אם יש למשתמש את המוצרים הנדרשים (אם הוגדרו ב-Tip)
                 boolean hasRequiredProducts = checkUserHasProducts(tip.getRequiredProducts());
 
                 if (matchesStyle && matchesTraits && hasRequiredProducts) {
@@ -140,14 +122,13 @@ public class BuildLookActivity extends AppCompatActivity {
         for (String req : required) {
             boolean found = false;
             for (Product p : userProducts) {
-                // Check if product name or brand contains the requirement (e.g. "Lipstick")
                 if (p.getName().toLowerCase().contains(req.toLowerCase()) || 
                     p.getBrand().toLowerCase().contains(req.toLowerCase())) {
                     found = true;
                     break;
                 }
             }
-            if (!found) return false; // Missing at least one required product type
+            if (!found) return false;
         }
         return true;
     }
@@ -157,7 +138,7 @@ public class BuildLookActivity extends AppCompatActivity {
             rvResults.setVisibility(View.GONE);
             tvResultsTitle.setVisibility(View.GONE);
             tvNoResults.setVisibility(View.VISIBLE);
-            tvNoResults.setText("No looks found that match both your style and the products you own. \n\nTip: Make sure you've added your makeup items to 'My Products'!");
+            tvNoResults.setText("No looks found that match your style, features, and owned products.");
         } else {
             adapter.updateList(results);
             rvResults.setVisibility(View.VISIBLE);

@@ -1,93 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FDF0F0"
-    tools:context=".ProductCollection">
+    android:orientation="vertical"
+    android:background="#FDF0F0">
 
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="My Product Collection"
-        android:textColor="#A64452"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <include layout="@layout/app_logo_header" />
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/search_view"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_margin="16dp"
         android:background="@drawable/search_background"
         app:iconifiedByDefault="false"
-        app:queryHint="Search for makeup products..."
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_title" />
+        app:queryHint="Search for products..." />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_products"
-        android:layout_width="0dp"
+    <ScrollView
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/btn_add_product"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search_view" />
+        android:layout_weight="1">
 
-    <TextView
-        android:id="@+id/tv_empty_message"
-        android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- MY COLLECTION SECTION -->
+            <TextView
+                android:id="@+id/tv_title_my_collection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Collection"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#3E2723"
+                android:layout_marginBottom="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_my_collection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginBottom="24dp"/>
+
+            <TextView
+                android:id="@+id/tv_empty_my_collection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Your collection is empty. Add products below!"
+                android:textColor="#7D7D7D"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- ALL PRODUCTS SECTION -->
+            <TextView
+                android:id="@+id/tv_title_all_products"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All Products"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#3E2723"
+                android:layout_marginBottom="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_all_products"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Your collection is empty.\nSearch for products to add it!"
-        android:textAlignment="center"
-        android:textColor="#757575"
-        android:textSize="16sp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btn_add_product"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search_view" />
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_add_product"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="8dp"
-        android:backgroundTint="#F4C2C2"
-        android:text="Add Selected to Collection"
-        android:textColor="#3E2723"
-        android:visibility="gone"
-        app:cornerRadius="15dp"
-        app:layout_constraintBottom_toTopOf="@id/btn_goback"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_goback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            app:backgroundTint="#D86B8C"
+            app:cornerRadius="20dp"
+            android:layout_marginEnd="16dp"/>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_goback"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="24dp"
-        android:text="Back"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        app:backgroundTint="#D86B8C"
-        app:cornerRadius="20dp"
-        app:icon="@drawable/ic_arrow_back"
-        app:iconGravity="textStart"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_add_product"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ADD TO COLLECTION"
+            android:backgroundTint="#D36B6B"
+            app:cornerRadius="12dp" />
+    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

@@ -24,6 +24,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     private List<Product> filteredList;
     private Set<Product> selectedProducts = new HashSet<>();
     private Set<String> favoriteIds = new HashSet<>();
+    private Set<String> collectionIds = new HashSet<>(); // New: Tracks products already in collection
     private OnProductRemoveListener removeListener;
     private boolean isMyCollectionMode = false;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -37,6 +38,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         this.products = products;
         this.filteredList = new ArrayList<>(products);
         fetchFavorites();
+        fetchCollectionIds(); // Listen to my_collection
     }
 
     private void fetchFavorites() {
@@ -47,6 +49,20 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                         favoriteIds.clear();
                         for (com.google.firebase.firestore.DocumentSnapshot doc : value) {
                             favoriteIds.add(doc.getId());
+                        }
+                        notifyDataSetChanged();
+                    }
+                });
+    }
+
+    private void fetchCollectionIds() {
+        if (userId == null) return;
+        db.collection("users").document(userId).collection("my_collection")
+                .addSnapshotListener((value, error) -> {
+                    if (value != null) {
+                        collectionIds.clear();
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : value) {
+                            collectionIds.add(doc.getId());
                         }
                         notifyDataSetChanged();
                     }
@@ -82,8 +98,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         // Favorite logic
         boolean isFav = favoriteIds.contains(product.getId());
-        holder.btnFavorite.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
-        
+        holder.btnFavorite.setImageResource(isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
         holder.btnFavorite.setOnClickListener(v -> toggleFavorite(product, isFav));
 
         if (isMyCollectionMode) {
@@ -95,8 +110,16 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         } else {
             holder.checkBox.setVisibility(View.VISIBLE);
             holder.btnRemove.setVisibility(View.GONE);
+            
             holder.checkBox.setOnCheckedChangeListener(null);
-            holder.checkBox.setChecked(selectedProducts.contains(product));
+            
+            // Logic: Checkbox is checked if it's already in collection OR currently selected
+            boolean alreadyInCollection = collectionIds.contains(product.getId());
+            holder.checkBox.setChecked(alreadyInCollection || selectedProducts.contains(product));
+            
+            // If it's already in collection, we can disable the checkbox or just let it stay checked
+            holder.checkBox.setEnabled(!alreadyInCollection); 
+
             holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) selectedProducts.add(product);
                 else selectedProducts.remove(product);

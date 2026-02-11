@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -11,15 +12,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TipsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerAll, recyclerRecommended;
     private TipsAdapter adapterAll, adapterRecommended;
-    private List<Tip> allTips;
+    private List<Tip> allTipsList;
     private TextView tvRecommendedTitle;
     private FirebaseFirestore db;
     private String userId;
@@ -33,35 +34,20 @@ public class TipsActivity extends AppCompatActivity {
         userId = FirebaseAuth.getInstance().getUid();
 
         tvRecommendedTitle = findViewById(R.id.tv_recommended_title);
-        setupData();
+        allTipsList = new ArrayList<>();
+        
         setupRecyclerViews();
         setupSearchView();
         setupBottomNavigation();
         
-        loadUserPreferencesAndFilter();
-    }
-
-    private void setupData() {
-        allTips = new ArrayList<>();
-        allTips.add(new Tip("Smoky Eye for Brown Eyes", "Highlight your brown eyes with deep earthy tones.", android.R.drawable.ic_menu_gallery, Arrays.asList("Brown", "Round")));
-        allTips.add(new Tip("Fair Skin Glow", "Best blush and highlight techniques for fair complexions.", android.R.drawable.ic_menu_gallery, Arrays.asList("Fair")));
-        allTips.add(new Tip("Blue Eye Magic", "Contrasting shades to make blue eyes pop.", android.R.drawable.ic_menu_gallery, Arrays.asList("Blue")));
-        allTips.add(new Tip("Hooded Eyes Wing", "Master the 'bat-wing' eyeliner for hooded lids.", android.R.drawable.ic_menu_gallery, Arrays.asList("Hooded")));
-        allTips.add(new Tip("Olive Skin Bronzing", "Get that sun-kissed look for olive skin tones.", android.R.drawable.ic_menu_gallery, Arrays.asList("Olive")));
-        allTips.add(new Tip("Bold Red Lips", "Classic look for all face shapes.", android.R.drawable.ic_menu_gallery, Arrays.asList("Full", "Natural")));
-        allTips.add(new Tip("Brown Hair Harmony", "Makeup colors that complement brunette hair.", android.R.drawable.ic_menu_gallery, Arrays.asList("Brown")));
-        
-        // New Eyebrow related tips
-        allTips.add(new Tip("Define Arched Brows", "How to emphasize your natural arch for a lifted look.", android.R.drawable.ic_menu_gallery, Arrays.asList("Arched")));
-        allTips.add(new Tip("Straight Brow Trend", "Achieve the youthful 'Korean straight brow' look.", android.R.drawable.ic_menu_gallery, Arrays.asList("Straight")));
-        allTips.add(new Tip("Softening Rounded Brows", "Techniques to define rounded brows without making them look too harsh.", android.R.drawable.ic_menu_gallery, Arrays.asList("Rounded")));
+        loadTipsFromFirestore();
     }
 
     private void setupRecyclerViews() {
         // All Tips
         recyclerAll = findViewById(R.id.recycler_tips);
         recyclerAll.setLayoutManager(new LinearLayoutManager(this));
-        adapterAll = new TipsAdapter(allTips);
+        adapterAll = new TipsAdapter(allTipsList);
         recyclerAll.setAdapter(adapterAll);
 
         // Recommended Tips
@@ -69,6 +55,25 @@ public class TipsActivity extends AppCompatActivity {
         recyclerRecommended.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         adapterRecommended = new TipsAdapter(new ArrayList<>());
         recyclerRecommended.setAdapter(adapterRecommended);
+    }
+
+    private void loadTipsFromFirestore() {
+        db.collection("tips").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                allTipsList.clear();
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    Tip tip = document.toObject(Tip.class);
+                    allTipsList.add(tip);
+                }
+                // UPDATE: Use updateList to ensure the adapter's internal filtered list is updated
+                adapterAll.updateList(allTipsList);
+                
+                // Once tips are loaded, filter recommendations based on user info
+                loadUserPreferencesAndFilter();
+            } else {
+                Toast.makeText(this, "Error loading tips", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadUserPreferencesAndFilter() {
@@ -83,8 +88,8 @@ public class TipsActivity extends AppCompatActivity {
                 String eyebrows = doc.getString("eyebrowsShape");
 
                 List<Tip> recommended = new ArrayList<>();
-                for (Tip tip : allTips) {
-                    // Check if tip matches any of the user traits including eyebrows
+                for (Tip tip : allTipsList) {
+                    // Match based on user traits
                     if (tip.matches(skin, eyes, eyeShape, hair, eyebrows)) {
                         recommended.add(tip);
                     }
@@ -94,6 +99,9 @@ public class TipsActivity extends AppCompatActivity {
                     adapterRecommended.updateList(recommended);
                     tvRecommendedTitle.setVisibility(View.VISIBLE);
                     recyclerRecommended.setVisibility(View.VISIBLE);
+                } else {
+                    tvRecommendedTitle.setVisibility(View.GONE);
+                    recyclerRecommended.setVisibility(View.GONE);
                 }
             }
         });

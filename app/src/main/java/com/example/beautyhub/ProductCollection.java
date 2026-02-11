@@ -24,15 +24,16 @@ import java.util.List;
 public class ProductCollection extends AppCompatActivity {
 
     private SearchView searchView;
-    private RecyclerView rvProducts;
+    private RecyclerView rvMyCollection, rvAllProducts;
     private MaterialButton btnAddProduct, btnBack;
-    private TextView tvEmptyMessage;
-    private List<Product> productList = new ArrayList<>();
-    private List<Product> allProducts = new ArrayList<>();
-    private ProductAdapter adapter;
+    private TextView tvEmptyMyCollection;
+    
+    private ProductAdapter adapterMyCollection, adapterAllProducts;
+    private List<Product> myProductsList = new ArrayList<>();
+    private List<Product> allProductsCatalog = new ArrayList<>();
+    
     private FirebaseFirestore db;
     private FirebaseAuth auth;
-    private boolean isSearching = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,101 +51,88 @@ public class ProductCollection extends AppCompatActivity {
         });
 
         initViews();
-        setupRecyclerView();
+        setupRecyclerViews();
         setupSearch();
         fetchUserCollection();
-        fetchAllProductsForSearch();
+        fetchAllCatalogProducts();
 
-        btnAddProduct.setOnClickListener(v -> saveSelectedProductsToUserCollection());
+        btnAddProduct.setOnClickListener(v -> saveSelectedToCollection());
         btnBack.setOnClickListener(v -> finish());
     }
 
     private void initViews() {
         searchView = findViewById(R.id.search_view);
-        rvProducts = findViewById(R.id.rv_products);
+        rvMyCollection = findViewById(R.id.rv_my_collection);
+        rvAllProducts = findViewById(R.id.rv_all_products);
         btnAddProduct = findViewById(R.id.btn_add_product);
         btnBack = findViewById(R.id.btn_goback);
-        tvEmptyMessage = findViewById(R.id.tv_empty_message);
+        tvEmptyMyCollection = findViewById(R.id.tv_empty_my_collection);
     }
 
-    private void setupRecyclerView() {
-        rvProducts.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ProductAdapter(productList);
-        adapter.setMyCollectionMode(true); // Start in collection view mode
-        adapter.setOnProductRemoveListener(this::removeProductFromCollection);
-        rvProducts.setAdapter(adapter);
+    private void setupRecyclerViews() {
+        // My Collection Setup
+        rvMyCollection.setLayoutManager(new LinearLayoutManager(this));
+        adapterMyCollection = new ProductAdapter(myProductsList);
+        adapterMyCollection.setMyCollectionMode(true);
+        adapterMyCollection.setOnProductRemoveListener(this::removeProductFromCollection);
+        rvMyCollection.setAdapter(adapterMyCollection);
+
+        // All Products Setup
+        rvAllProducts.setLayoutManager(new LinearLayoutManager(this));
+        adapterAllProducts = new ProductAdapter(allProductsCatalog);
+        adapterAllProducts.setMyCollectionMode(false);
+        rvAllProducts.setAdapter(adapterAllProducts);
     }
 
     private void setupSearch() {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
+            public boolean onQueryTextSubmit(String query) { return false; }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (newText.isEmpty()) {
-                    isSearching = false;
-                    adapter.setMyCollectionMode(true);
-                    adapter.setProducts(productList);
-                    updateEmptyMessage();
-                    btnAddProduct.setVisibility(View.GONE);
-                } else {
-                    isSearching = true;
-                    adapter.setMyCollectionMode(false);
-                    adapter.setProducts(allProducts);
-                    adapter.filter(newText);
-                    tvEmptyMessage.setVisibility(View.GONE);
-                    btnAddProduct.setVisibility(View.VISIBLE);
-                }
+                adapterAllProducts.filter(newText);
                 return true;
             }
         });
     }
 
     private void fetchUserCollection() {
+        if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId).collection("my_collection")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
                     if (value != null) {
-                        productList.clear();
+                        myProductsList.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            productList.add(doc.toObject(Product.class));
+                            Product p = doc.toObject(Product.class);
+                            if (p.getId() == null) p.setId(doc.getId());
+                            myProductsList.add(p);
                         }
-                        if (!isSearching) {
-                            adapter.setProducts(productList);
-                            updateEmptyMessage();
-                        }
+                        adapterMyCollection.setProducts(myProductsList);
+                        tvEmptyMyCollection.setVisibility(myProductsList.isEmpty() ? View.VISIBLE : View.GONE);
                     }
                 });
     }
 
-    private void fetchAllProductsForSearch() {
-        db.collection("all_products").get().addOnCompleteListener(task -> {
+    private void fetchAllCatalogProducts() {
+        db.collection("products").get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null) {
-                allProducts.clear();
+                allProductsCatalog.clear();
                 for (QueryDocumentSnapshot doc : task.getResult()) {
-                    allProducts.add(doc.toObject(Product.class));
+                    Product p = doc.toObject(Product.class);
+                    if (p.getId() == null) p.setId(doc.getId());
+                    allProductsCatalog.add(p);
                 }
+                adapterAllProducts.setProducts(allProductsCatalog);
             }
         });
     }
 
-    private void removeProductFromCollection(Product product) {
-        String userId = auth.getCurrentUser().getUid();
-        db.collection("users").document(userId)
-                .collection("my_collection")
-                .document(product.getId())
-                .delete()
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Removed " + product.getName(), Toast.LENGTH_SHORT).show());
-    }
-
-    private void saveSelectedProductsToUserCollection() {
-        List<Product> selected = adapter.getSelectedProducts();
+    private void saveSelectedToCollection() {
+        List<Product> selected = adapterAllProducts.getSelectedProducts();
         if (selected.isEmpty()) {
-            Toast.makeText(this, "Please select products first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select products from 'All Products'", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -155,18 +143,14 @@ public class ProductCollection extends AppCompatActivity {
                     .document(product.getId())
                     .set(product);
         }
-        
         Toast.makeText(this, "Added to your collection!", Toast.LENGTH_SHORT).show();
-        searchView.setQuery("", true); // Clear search and return to collection view
     }
 
-    private void updateEmptyMessage() {
-        if (productList.isEmpty()) {
-            tvEmptyMessage.setVisibility(View.VISIBLE);
-            rvProducts.setVisibility(View.GONE);
-        } else {
-            tvEmptyMessage.setVisibility(View.GONE);
-            rvProducts.setVisibility(View.VISIBLE);
-        }
+    private void removeProductFromCollection(Product product) {
+        String userId = auth.getCurrentUser().getUid();
+        db.collection("users").document(userId)
+                .collection("my_collection")
+                .document(product.getId())
+                .delete();
     }
 }

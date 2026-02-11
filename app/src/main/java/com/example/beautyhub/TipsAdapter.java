@@ -1,10 +1,13 @@
 package com.example.beautyhub;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
@@ -32,7 +35,24 @@ public class TipsAdapter extends RecyclerView.Adapter<TipsAdapter.TipViewHolder>
         Tip tip = filteredList.get(position);
         holder.tvTitle.setText(tip.getTitle());
         holder.tvDescription.setText(tip.getDescription());
-        holder.imgTip.setImageResource(tip.getImageResId());
+        
+        // Use a default icon or handle image from tip if available
+        holder.imgTip.setImageResource(R.drawable.ic_nav_tips); // Using tips icon as placeholder
+
+        // Handle click to open video URL
+        holder.itemView.setOnClickListener(v -> {
+            String videoUrl = tip.getVideoUrl();
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(videoUrl));
+                    v.getContext().startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(v.getContext(), "Could not open video link", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(v.getContext(), "No video available for this tip", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -53,8 +73,8 @@ public class TipsAdapter extends RecyclerView.Adapter<TipsAdapter.TipViewHolder>
         } else {
             String filterPattern = query.toLowerCase().trim();
             for (Tip item : tipsList) {
-                if (item.getTitle().toLowerCase().contains(filterPattern) || 
-                    item.getDescription().toLowerCase().contains(filterPattern)) {
+                if ((item.getTitle() != null && item.getTitle().toLowerCase().contains(filterPattern)) || 
+                    (item.getDescription() != null && item.getDescription().toLowerCase().contains(filterPattern))) {
                     filteredList.add(item);
                 }
             }
