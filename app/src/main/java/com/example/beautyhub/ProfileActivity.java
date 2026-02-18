@@ -22,7 +22,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private UserImageSelector imageSelector;
     private ImageView ivUserProfilePic;
-    private TextView tvUsername;
+    private TextView tvUsername, tvUserRole;
     private MaterialButton btnSetProfilePic;
     private FirebaseFirestore db;
     private String userId;
@@ -37,6 +37,7 @@ public class ProfileActivity extends AppCompatActivity {
         userId = FirebaseAuth.getInstance().getUid();
         ivUserProfilePic = findViewById(R.id.iv_user_profile_pic);
         tvUsername = findViewById(R.id.tv_username);
+        tvUserRole = findViewById(R.id.tv_user_role);
         btnSetProfilePic = findViewById(R.id.btn_set_profile_pic);
 
         loadUserProfileData();
@@ -103,6 +104,14 @@ public class ProfileActivity extends AppCompatActivity {
                     tvUsername.setText("Hello, " + nameToDisplay + "!");
                 }
 
+                // בדיקה אם המשתמש הוא Guide
+                if (doc.contains("isGuide") && doc.getBoolean("isGuide")) {
+                    tvUserRole.setVisibility(View.VISIBLE);
+                    tvUserRole.setText("Guide");
+                } else {
+                    tvUserRole.setVisibility(View.GONE);
+                }
+
                 if (doc.contains("profileImageUrl")) {
                     String url = doc.getString("profileImageUrl");
                     Glide.with(this).load(url).placeholder(android.R.drawable.ic_menu_camera).into(ivUserProfilePic);
@@ -139,10 +148,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         String uid = user.getUid();
         
-        // שלב 1: מחיקת הנתונים מ-Firestore קודם
         db.collection("users").document(uid).delete()
                 .addOnSuccessListener(aVoid -> {
-                    // שלב 2: מחיקת המשתמש מ-Firebase Auth
                     user.delete().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             Toast.makeText(this, "Account deleted successfully", Toast.LENGTH_SHORT).show();
@@ -153,7 +160,6 @@ public class ProfileActivity extends AppCompatActivity {
                             startActivity(intent);
                             finish();
                         } else {
-                            // אם מחיקת המשתמש מ-Auth נכשלה (בגלל session ישן), נבקש להתחבר מחדש
                             Toast.makeText(this, "Please logout and login again before deleting account for security reasons.", Toast.LENGTH_LONG).show();
                         }
                     });

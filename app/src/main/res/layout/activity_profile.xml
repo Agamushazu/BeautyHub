@@ -56,7 +56,19 @@
             android:textColor="#3E2723"
             android:textStyle="bold"
             android:layout_gravity="center"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tv_user_role"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Guide"
+            android:textSize="14sp"
+            android:textColor="#D86B8C"
+            android:textStyle="italic|bold"
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"/>
 
 
         <com.google.android.material.imageview.ShapeableImageView

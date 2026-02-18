@@ -77,7 +77,6 @@ public class TipsActivity extends AppCompatActivity {
 
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
-                // שליפת כל מאפייני המשתמש
                 List<String> userTraits = new ArrayList<>();
                 if (doc.contains("skinTone")) userTraits.add(doc.getString("skinTone"));
                 if (doc.contains("eyeColor")) userTraits.add(doc.getString("eyeColor"));
@@ -89,22 +88,19 @@ public class TipsActivity extends AppCompatActivity {
 
                 final List<Tip> recommendedList = new ArrayList<>();
 
-                // 1. הוספת טיפים מובנים מהמערכת שמתאימים למשתמש
                 for (Tip tip : allTipsList) {
                     if (tip.matches(userTraits.toArray(new String[0]))) {
                         recommendedList.add(tip);
                     }
                 }
 
-                // 2. הוספת טיפים שהועלו ע"י Guides (פוסטים עם isTip=true)
                 db.collection("posts")
-                    .whereEqualTo("tip", true) // בשם השדה ב-Firebase
+                    .whereEqualTo("tip", true) // Corrected from "isTip" to "tip"
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot postDoc : queryDocumentSnapshots) {
                             BeautyPost post = postDoc.toObject(BeautyPost.class);
                             
-                            // בדיקה אם אחד התגים של הפוסט מתאים למאפייני המשתמש
                             if (post.getTags() != null) {
                                 boolean isMatch = false;
                                 for (String tag : post.getTags()) {
@@ -118,17 +114,15 @@ public class TipsActivity extends AppCompatActivity {
                                 }
 
                                 if (isMatch) {
-                                    // המרת הפוסט לאובייקט Tip כדי להציג אותו באותו אדפטר
                                     Tip tipFromPost = new Tip();
                                     tipFromPost.setTitle(post.getTitle() + " (by " + post.getOwnerNickname() + ")");
                                     tipFromPost.setDescription(post.getDescription());
-                                    tipFromPost.setVideoUrl(post.getPostImageUrl()); // נשתמש בתמונה כקישור או מקור
+                                    tipFromPost.setVideoUrl(post.getPostImageUrl());
                                     recommendedList.add(tipFromPost);
                                 }
                             }
                         }
 
-                        // עדכון התצוגה של ההמלצות
                         if (!recommendedList.isEmpty()) {
                             adapterRecommended.updateList(recommendedList);
                             tvRecommendedTitle.setVisibility(View.VISIBLE);

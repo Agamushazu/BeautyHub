@@ -1,13 +1,13 @@
 package com.example.beautyhub;
 
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,8 +28,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AddPostActivity extends AppCompatActivity {
 
@@ -39,19 +40,15 @@ public class AddPostActivity extends AppCompatActivity {
     private ImageView ivSelectedImage;
     private Uri selectedImageUri;
     private File photoFile;
-    private boolean isGuide;
+    private boolean isGuide = false;
     
-    private List<String> allPossibleTags = new ArrayList<>();
-    private boolean[] checkedTags;
     private List<String> selectedTagsList = new ArrayList<>();
+    private Map<String, Boolean> tagStatusMap = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_post);
-
-        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
-        isGuide = sp.getBoolean("isGuide", false);
 
         etTitle = findViewById(R.id.et_post_title);
         etDescription = findViewById(R.id.et_post_description);
@@ -64,15 +61,12 @@ public class AddPostActivity extends AppCompatActivity {
         MaterialButton btnBack = findViewById(R.id.btn_back);
         MaterialButton btnSelectTags = findViewById(R.id.btn_select_tags);
 
-        if (isGuide) {
-            layoutGuideTags.setVisibility(View.VISIBLE);
-            prepareTagsList();
-        }
+        checkUserRole();
 
         btnSelectTags.setOnClickListener(v -> showTagsDialog());
         btnBack.setOnClickListener(v -> finish());
 
-        ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
+        ActivityResultLauncher<android.content.Intent> galleryLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -84,7 +78,7 @@ public class AddPostActivity extends AppCompatActivity {
                 }
         );
 
-        ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(
+        ActivityResultLauncher<android.content.Intent> cameraLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -98,53 +92,90 @@ public class AddPostActivity extends AppCompatActivity {
         );
 
         btnPickImage.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             galleryLauncher.launch(intent);
         });
 
         btnTakePhoto.setOnClickListener(v -> {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            android.content.Intent intent = new android.content.Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             cameraLauncher.launch(intent);
         });
 
         btnSubmit.setOnClickListener(v -> validateAndUpload());
     }
 
-    private void prepareTagsList() {
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.eye_colors)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.eye_shapes)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.skin_tones)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.face_shapes)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.eyebrows_shapes)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.lips_sizes)));
-        allPossibleTags.addAll(Arrays.asList(getResources().getStringArray(R.array.hair_colors)));
+    private void checkUserRole() {
+        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
+        isGuide = sp.getBoolean("isGuide", false);
         
-        checkedTags = new boolean[allPossibleTags.size()];
+        if (isGuide) {
+            layoutGuideTags.setVisibility(View.VISIBLE);
+        } else {
+            String uid = FirebaseAuth.getInstance().getUid();
+            if (uid != null) {
+                FirebaseFirestore.getInstance().collection("users").document(uid).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists() && documentSnapshot.contains("isGuide")) {
+                            isGuide = documentSnapshot.getBoolean("isGuide");
+                            if (isGuide) layoutGuideTags.setVisibility(View.VISIBLE);
+                        }
+                    });
+            }
+        }
     }
 
     private void showTagsDialog() {
-        String[] tagsArray = allPossibleTags.toArray(new String[0]);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Select Beauty Categories");
-        builder.setMultiChoiceItems(tagsArray, checkedTags, (dialog, which, isChecked) -> {
-            checkedTags[which] = isChecked;
-        });
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_tags, null);
+        LinearLayout container = dialogView.findViewById(R.id.container_tags);
 
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            selectedTagsList.clear();
-            StringBuilder preview = new StringBuilder();
-            for (int i = 0; i < checkedTags.length; i++) {
-                if (checkedTags[i]) {
-                    selectedTagsList.add(tagsArray[i]);
-                    if (preview.length() > 0) preview.append(", ");
-                    preview.append(tagsArray[i]);
-                }
+        // Define categories and their corresponding string arrays
+        addCategoryToDialog(container, "Eye Color", R.array.eye_colors);
+        addCategoryToDialog(container, "Eye Shape", R.array.eye_shapes);
+        addCategoryToDialog(container, "Skin Tone", R.array.skin_tones);
+        addCategoryToDialog(container, "Face Shape", R.array.face_shapes);
+        addCategoryToDialog(container, "Eyebrows Shape", R.array.eyebrows_shapes);
+        addCategoryToDialog(container, "Lips Size", R.array.lips_sizes);
+        addCategoryToDialog(container, "Hair Color", R.array.hair_colors);
+
+        new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setPositiveButton("OK", (dialog, which) -> updateSelectedTagsPreview())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void addCategoryToDialog(LinearLayout container, String title, int arrayResId) {
+        // Add Category Header
+        TextView header = new TextView(this);
+        header.setText(title);
+        header.setTextSize(16);
+        header.setPadding(0, 20, 0, 10);
+        header.setTextColor(getResources().getColor(R.color.nav_item_color_state)); // Use an existing color or #A64452
+        header.setTypeface(null, android.graphics.Typeface.BOLD);
+        container.addView(header);
+
+        // Add Checkboxes for each item in the array
+        String[] items = getResources().getStringArray(arrayResId);
+        for (String item : items) {
+            CheckBox cb = new CheckBox(this);
+            cb.setText(item);
+            cb.setChecked(tagStatusMap.getOrDefault(item, false));
+            cb.setOnCheckedChangeListener((buttonView, isChecked) -> tagStatusMap.put(item, isChecked));
+            container.addView(cb);
+        }
+    }
+
+    private void updateSelectedTagsPreview() {
+        selectedTagsList.clear();
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Boolean> entry : tagStatusMap.entrySet()) {
+            if (entry.getValue()) {
+                selectedTagsList.add(entry.getKey());
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(entry.getKey());
             }
-            tvSelectedTags.setText(preview.length() > 0 ? preview.toString() : "No tags selected");
-        });
-
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        }
+        tvSelectedTags.setText(sb.length() > 0 ? sb.toString() : "No tags selected");
     }
 
     private File saveBitmapToFile(Bitmap bitmap) {

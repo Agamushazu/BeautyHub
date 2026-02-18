@@ -41,6 +41,16 @@
                     android:textColor="#3E2723" />
 
                 <TextView
+                    android:id="@+id/tv_post_role"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Guide"
+                    android:textSize="12sp"
+                    android:textColor="#D86B8C"
+                    android:textStyle="italic|bold"
+                    android:visibility="gone" />
+
+                <TextView
                     android:id="@+id/tv_post_created_at"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
