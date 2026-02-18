@@ -80,16 +80,21 @@ public class LoginActivity extends AppCompatActivity {
                         if (doc.exists()) {
                             saveUserDataLocally(doc.getString("nickname"),
                                     doc.contains("age") ? doc.getLong("age").intValue() : 0,
-                                    doc.contains("level") ? doc.getLong("level").intValue() : 0);
+                                    doc.contains("level") ? doc.getLong("level").intValue() : 0,
+                                    doc.contains("isGuide") && doc.getBoolean("isGuide"));
                         }
                         startFeedActivity(true);
                     }
                 });
     }
 
-    private void saveUserDataLocally(String nickname, int age, int level) {
+    private void saveUserDataLocally(String nickname, int age, int level, boolean isGuide) {
         getSharedPreferences("userInfo", MODE_PRIVATE).edit()
-                .putString("nickname", nickname).putInt("age", age).putInt("level", level).apply();
+                .putString("nickname", nickname)
+                .putInt("age", age)
+                .putInt("level", level)
+                .putBoolean("isGuide", isGuide)
+                .apply();
     }
 
     private void startFeedActivity(boolean sendToast) {

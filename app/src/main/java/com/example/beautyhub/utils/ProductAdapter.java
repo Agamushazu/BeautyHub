@@ -8,6 +8,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.beautyhub.R;
@@ -96,6 +97,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .into(holder.ivProduct);
 
+        // לחיצה על כרטיס המוצר תפתח דיאלוג עם פרטים מלאים
+        holder.itemView.setOnClickListener(v -> showProductDescription(holder.itemView.getContext(), product));
+
         // Favorite logic
         boolean isFav = favoriteIds.contains(product.getId());
         holder.btnFavorite.setImageResource(isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
@@ -125,6 +129,31 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 else selectedProducts.remove(product);
             });
         }
+    }
+
+    private void showProductDescription(android.content.Context context, Product product) {
+        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_product_details, null);
+        
+        ImageView ivProduct = dialogView.findViewById(R.id.iv_dialog_product_image);
+        TextView tvName = dialogView.findViewById(R.id.tv_dialog_product_name);
+        TextView tvBrand = dialogView.findViewById(R.id.tv_dialog_product_brand);
+        TextView tvDescription = dialogView.findViewById(R.id.tv_dialog_product_description);
+
+        tvName.setText(product.getName());
+        tvBrand.setText(product.getBrand());
+        
+        String desc = product.getDescription();
+        tvDescription.setText((desc == null || desc.isEmpty()) ? "No description available." : desc);
+
+        Glide.with(context)
+                .load(product.getImageUrl())
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .into(ivProduct);
+
+        new AlertDialog.Builder(context)
+                .setView(dialogView)
+                .setPositiveButton("Close", null)
+                .show();
     }
 
     private void toggleFavorite(Product product, boolean isCurrentlyFav) {

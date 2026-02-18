@@ -139,30 +139,28 @@ public class ProfileActivity extends AppCompatActivity {
 
         String uid = user.getUid();
         
-        user.delete().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                db.collection("users").document(uid).delete()
-                        .addOnSuccessListener(aVoid -> {
+        // שלב 1: מחיקת הנתונים מ-Firestore קודם
+        db.collection("users").document(uid).delete()
+                .addOnSuccessListener(aVoid -> {
+                    // שלב 2: מחיקת המשתמש מ-Firebase Auth
+                    user.delete().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
                             Toast.makeText(this, "Account deleted successfully", Toast.LENGTH_SHORT).show();
-                            // איפוס נתונים מקומיים
                             getSharedPreferences("userInfo", MODE_PRIVATE).edit().clear().apply();
-                            FirebaseAuth.getInstance().signOut();
                             
-                            // שליחה לעמוד הרשמה כפי שביקשת
                             Intent intent = new Intent(this, RegistrationActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
                             finish();
-                        })
-                        .addOnFailureListener(e -> {
-                            FirebaseAuth.getInstance().signOut();
-                            startActivity(new Intent(this, RegistrationActivity.class));
-                            finish();
-                        });
-            } else {
-                Toast.makeText(this, "Please logout and login again before deleting account.", Toast.LENGTH_LONG).show();
-            }
-        });
+                        } else {
+                            // אם מחיקת המשתמש מ-Auth נכשלה (בגלל session ישן), נבקש להתחבר מחדש
+                            Toast.makeText(this, "Please logout and login again before deleting account for security reasons.", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to delete user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setupBottomNav() {

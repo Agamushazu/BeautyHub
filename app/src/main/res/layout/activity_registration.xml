@@ -69,12 +69,45 @@
             android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/input_field_rounded"
             android:hint="Password"
             android:inputType="textPassword"
             android:paddingStart="20dp"
             android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="I want to be a:"
+            android:textColor="#333333"
+            android:textSize="16sp" />
+
+        <RadioGroup
+            android:id="@+id/rg_role"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rb_student"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="Student"
+                android:textColor="#333333" />
+
+            <RadioButton
+                android:id="@+id/rb_guide"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Guide"
+                android:textColor="#333333" />
+        </RadioGroup>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_register"

@@ -35,8 +35,15 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvDesc.setText(post.getDescription());
         holder.tvOwner.setText("By: " + post.getOwnerNickname());
 
+        // הצגת תג "Guide" אם הפוסט הוא טיפ
+        if (post.isTip()) {
+            holder.tvRole.setVisibility(View.VISIBLE);
+            holder.tvRole.setText("Guide • Tip");
+        } else {
+            holder.tvRole.setVisibility(View.GONE);
+        }
+
         if (post.getCreatedAt() != null) {
-            // הגדרת הפורמט עם אזור זמן של ישראל (GMT+2/3)
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             sdf.setTimeZone(TimeZone.getTimeZone("Asia/Jerusalem")); 
             holder.tvDate.setText(sdf.format(post.getCreatedAt().toDate()));
@@ -70,7 +77,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     public int getItemCount() { return posts.size(); }
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvDesc, tvOwner, tvDate;
+        TextView tvTitle, tvDesc, tvOwner, tvDate, tvRole;
         ImageView ivPost, ivProfile;
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -78,6 +85,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             tvDesc = itemView.findViewById(R.id.tv_post_description);
             tvOwner = itemView.findViewById(R.id.tv_post_owner);
             tvDate = itemView.findViewById(R.id.tv_post_created_at);
+            tvRole = itemView.findViewById(R.id.tv_post_role);
             ivPost = itemView.findViewById(R.id.iv_post_image);
             ivProfile = itemView.findViewById(R.id.iv_owner_profile);
         }

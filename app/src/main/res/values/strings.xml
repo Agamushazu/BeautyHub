@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TraveLog</string>
+    <string name="app_name">BeautyHub</string>
 
     <string-array name="levels_array">
         <item>1</item>
@@ -7,5 +7,65 @@
         <item>3</item>
         <item>4</item>
         <item>5</item>
+    </string-array>
+
+    <string-array name="eye_colors">
+        <item>Brown</item>
+        <item>Blue</item>
+        <item>Green</item>
+        <item>Hazel</item>
+        <item>Grey</item>
+        <item>Amber</item>
+    </string-array>
+
+    <string-array name="eye_shapes">
+        <item>Almond</item>
+        <item>Round</item>
+        <item>Monolid</item>
+        <item>Hooded</item>
+        <item>Downturned</item>
+        <item>Upturned</item>
+    </string-array>
+
+    <string-array name="skin_tones">
+        <item>Fair</item>
+        <item>Light</item>
+        <item>Medium</item>
+        <item>Tan</item>
+        <item>Deep</item>
+    </string-array>
+
+    <string-array name="face_shapes">
+        <item>Oval</item>
+        <item>Round</item>
+        <item>Square</item>
+        <item>Heart</item>
+        <item>Diamond</item>
+        <item>Long</item>
+    </string-array>
+
+    <string-array name="eyebrows_shapes">
+        <item>Arched</item>
+        <item>Rounded</item>
+        <item>Straight</item>
+        <item>S-Shaped</item>
+        <item>Thick</item>
+        <item>Thin</item>
+    </string-array>
+
+    <string-array name="lips_sizes">
+        <item>Small</item>
+        <item>Medium</item>
+        <item>Full</item>
+        <item>Thin</item>
+    </string-array>
+
+    <string-array name="hair_colors">
+        <item>Black</item>
+        <item>Brown</item>
+        <item>Blonde</item>
+        <item>Red</item>
+        <item>Grey</item>
+        <item>White</item>
     </string-array>
 </resources>

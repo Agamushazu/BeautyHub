@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.beautyhub.utils.BeautyPost;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -44,13 +45,11 @@ public class TipsActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerViews() {
-        // All Tips
         recyclerAll = findViewById(R.id.recycler_tips);
         recyclerAll.setLayoutManager(new LinearLayoutManager(this));
         adapterAll = new TipsAdapter(allTipsList);
         recyclerAll.setAdapter(adapterAll);
 
-        // Recommended Tips
         recyclerRecommended = findViewById(R.id.recycler_recommended_tips);
         recyclerRecommended.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         adapterRecommended = new TipsAdapter(new ArrayList<>());
@@ -65,10 +64,7 @@ public class TipsActivity extends AppCompatActivity {
                     Tip tip = document.toObject(Tip.class);
                     allTipsList.add(tip);
                 }
-                // UPDATE: Use updateList to ensure the adapter's internal filtered list is updated
                 adapterAll.updateList(allTipsList);
-                
-                // Once tips are loaded, filter recommendations based on user info
                 loadUserPreferencesAndFilter();
             } else {
                 Toast.makeText(this, "Error loading tips", Toast.LENGTH_SHORT).show();
@@ -81,28 +77,67 @@ public class TipsActivity extends AppCompatActivity {
 
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
-                String skin = doc.getString("skinTone");
-                String eyes = doc.getString("eyeColor");
-                String eyeShape = doc.getString("eyeShape");
-                String hair = doc.getString("hairColor");
-                String eyebrows = doc.getString("eyebrowsShape");
+                // שליפת כל מאפייני המשתמש
+                List<String> userTraits = new ArrayList<>();
+                if (doc.contains("skinTone")) userTraits.add(doc.getString("skinTone"));
+                if (doc.contains("eyeColor")) userTraits.add(doc.getString("eyeColor"));
+                if (doc.contains("eyeShape")) userTraits.add(doc.getString("eyeShape"));
+                if (doc.contains("hairColor")) userTraits.add(doc.getString("hairColor"));
+                if (doc.contains("eyebrowsShape")) userTraits.add(doc.getString("eyebrowsShape"));
+                if (doc.contains("lipsSize")) userTraits.add(doc.getString("lipsSize"));
+                if (doc.contains("faceShape")) userTraits.add(doc.getString("faceShape"));
 
-                List<Tip> recommended = new ArrayList<>();
+                final List<Tip> recommendedList = new ArrayList<>();
+
+                // 1. הוספת טיפים מובנים מהמערכת שמתאימים למשתמש
                 for (Tip tip : allTipsList) {
-                    // Match based on user traits
-                    if (tip.matches(skin, eyes, eyeShape, hair, eyebrows)) {
-                        recommended.add(tip);
+                    if (tip.matches(userTraits.toArray(new String[0]))) {
+                        recommendedList.add(tip);
                     }
                 }
 
-                if (!recommended.isEmpty()) {
-                    adapterRecommended.updateList(recommended);
-                    tvRecommendedTitle.setVisibility(View.VISIBLE);
-                    recyclerRecommended.setVisibility(View.VISIBLE);
-                } else {
-                    tvRecommendedTitle.setVisibility(View.GONE);
-                    recyclerRecommended.setVisibility(View.GONE);
-                }
+                // 2. הוספת טיפים שהועלו ע"י Guides (פוסטים עם isTip=true)
+                db.collection("posts")
+                    .whereEqualTo("tip", true) // בשם השדה ב-Firebase
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        for (QueryDocumentSnapshot postDoc : queryDocumentSnapshots) {
+                            BeautyPost post = postDoc.toObject(BeautyPost.class);
+                            
+                            // בדיקה אם אחד התגים של הפוסט מתאים למאפייני המשתמש
+                            if (post.getTags() != null) {
+                                boolean isMatch = false;
+                                for (String tag : post.getTags()) {
+                                    for (String trait : userTraits) {
+                                        if (trait != null && trait.equalsIgnoreCase(tag)) {
+                                            isMatch = true;
+                                            break;
+                                        }
+                                    }
+                                    if (isMatch) break;
+                                }
+
+                                if (isMatch) {
+                                    // המרת הפוסט לאובייקט Tip כדי להציג אותו באותו אדפטר
+                                    Tip tipFromPost = new Tip();
+                                    tipFromPost.setTitle(post.getTitle() + " (by " + post.getOwnerNickname() + ")");
+                                    tipFromPost.setDescription(post.getDescription());
+                                    tipFromPost.setVideoUrl(post.getPostImageUrl()); // נשתמש בתמונה כקישור או מקור
+                                    recommendedList.add(tipFromPost);
+                                }
+                            }
+                        }
+
+                        // עדכון התצוגה של ההמלצות
+                        if (!recommendedList.isEmpty()) {
+                            adapterRecommended.updateList(recommendedList);
+                            tvRecommendedTitle.setVisibility(View.VISIBLE);
+                            recyclerRecommended.setVisibility(View.VISIBLE);
+                        } else {
+                            tvRecommendedTitle.setVisibility(View.GONE);
+                            recyclerRecommended.setVisibility(View.GONE);
+                        }
+                    });
             }
         });
     }

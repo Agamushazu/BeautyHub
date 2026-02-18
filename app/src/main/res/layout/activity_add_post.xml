@@ -17,92 +17,143 @@
         app:icon="@drawable/ic_arrow_back"
         app:iconTint="#D86B8C" />
 
-    <TextView
-        android:id="@+id/lbl_post_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Post Title"
-        android:textColor="#3E2723"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_below="@id/btn_back"
-        android:layout_marginTop="10dp"/>
-
-    <EditText
-        android:id="@+id/et_post_title"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_below="@id/lbl_post_title"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/rounded_edittext"
-        android:hint="Type a title..."
-        android:paddingStart="16dp"
-        android:textSize="16sp" />
+        android:layout_height="match_parent"
+        android:layout_above="@id/btn_submit_post"
+        android:layout_below="@id/btn_back">
 
-    <TextView
-        android:id="@+id/lbl_post_content"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/et_post_title"
-        android:layout_marginTop="20dp"
-        android:text="Post Content"
-        android:textColor="#3E2723"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/et_post_description"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_below="@id/lbl_post_content"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/rounded_edittext"
-        android:gravity="top"
-        android:hint="Share your beauty secrets.."
-        android:padding="16dp"
-        android:textSize="16sp" />
-
-    <ImageView
-        android:id="@+id/iv_selected_image"
-        android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:layout_below="@id/et_post_description"
-        android:layout_marginTop="12dp"
-        android:scaleType="centerCrop"
-        android:visibility="gone"
-        android:background="@drawable/rounded_edittext"
-        android:clipToOutline="true" />
-
-    <LinearLayout
-        android:id="@+id/photo_buttons_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/iv_selected_image"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_pick_image"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="Gallery 🖼️"
-            android:textColor="#D86B8C"
-            app:strokeColor="#D86B8C"
-            app:cornerRadius="15dp" />
+            android:orientation="vertical">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_take_photo"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Camera 📷"
-            android:textColor="#D86B8C"
-            app:strokeColor="#D86B8C"
-            app:cornerRadius="15dp" />
-    </LinearLayout>
+            <TextView
+                android:id="@+id/lbl_post_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Post Title"
+                android:textColor="#3E2723"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_post_title"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/rounded_edittext"
+                android:hint="Type a title..."
+                android:paddingStart="16dp"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/lbl_post_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Post Content"
+                android:textColor="#3E2723"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_post_description"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/rounded_edittext"
+                android:gravity="top"
+                android:hint="Share your beauty secrets.."
+                android:padding="16dp"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:id="@+id/layout_guide_tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Is this a Tip? (Select Tags)"
+                    android:textColor="#3E2723"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Selecting tags will mark this post as a Guide Tip"
+                    android:textColor="#7D7D7D"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_select_tags"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Select Tags"
+                    android:textColor="#D86B8C"
+                    app:strokeColor="#D86B8C" />
+
+                <TextView
+                    android:id="@+id/tv_selected_tags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="No tags selected"
+                    android:textColor="#A64452"
+                    android:textSize="14sp"
+                    android:textStyle="italic" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/iv_selected_image"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/rounded_edittext"
+                android:clipToOutline="true"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/photo_buttons_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_pick_image"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="Gallery 🖼️"
+                    android:textColor="#D86B8C"
+                    app:cornerRadius="15dp"
+                    app:strokeColor="#D86B8C" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_take_photo"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Camera 📷"
+                    android:textColor="#D86B8C"
+                    app:cornerRadius="15dp"
+                    app:strokeColor="#D86B8C" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_submit_post"

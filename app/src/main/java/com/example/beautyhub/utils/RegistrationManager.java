@@ -24,6 +24,7 @@ public class RegistrationManager {
     int age;
     String nickname;
     int level;
+    boolean isGuide;
 
     private static final String TAG = "RegistrationManager";
 
@@ -52,6 +53,7 @@ public class RegistrationManager {
                                   String nickname,
                                   int age,
                                   int level,
+                                  boolean isGuide,
                                   File imageFile,
                                   OnResultCallback onResultCallback) {
         this.onResultCallback = onResultCallback;
@@ -60,6 +62,7 @@ public class RegistrationManager {
         this.nickname = nickname;
         this.age = age;
         this.level = level;
+        this.isGuide = isGuide;
         this.imageFile = imageFile;
         executeNextPhase();
     }
@@ -163,11 +166,12 @@ public class RegistrationManager {
     }
 
     private void saveUserToFirestore() {
-        Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname + ", Age: " + age + ", Level: " + level);
+        Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname + ", Age: " + age + ", Level: " + level + ", IsGuide: " + isGuide);
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("nickname", nickname);
         userMap.put("age", age);
         userMap.put("level", level);
+        userMap.put("isGuide", isGuide);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("users").document(userId)
