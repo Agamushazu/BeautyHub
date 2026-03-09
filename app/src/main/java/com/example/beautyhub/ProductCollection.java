@@ -1,6 +1,7 @@
 package com.example.beautyhub;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.beautyhub.utils.Product;
 import com.example.beautyhub.utils.ProductAdapter;
+import com.example.beautyhub.utils.ProductSeeder;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -56,6 +58,9 @@ public class ProductCollection extends AppCompatActivity {
         fetchUserCollection();
         fetchAllCatalogProducts();
 
+        // Optional: Run this once if you need to re-upload the missing products
+        // ProductSeeder.seedDatabase();
+
         btnAddProduct.setOnClickListener(v -> saveSelectedToCollection());
         btnBack.setOnClickListener(v -> finish());
     }
@@ -70,14 +75,12 @@ public class ProductCollection extends AppCompatActivity {
     }
 
     private void setupRecyclerViews() {
-        // My Collection Setup
         rvMyCollection.setLayoutManager(new LinearLayoutManager(this));
         adapterMyCollection = new ProductAdapter(myProductsList);
         adapterMyCollection.setMyCollectionMode(true);
         adapterMyCollection.setOnProductRemoveListener(this::removeProductFromCollection);
         rvMyCollection.setAdapter(adapterMyCollection);
 
-        // All Products Setup
         rvAllProducts.setLayoutManager(new LinearLayoutManager(this));
         adapterAllProducts = new ProductAdapter(allProductsCatalog);
         adapterAllProducts.setMyCollectionMode(false);
@@ -102,6 +105,10 @@ public class ProductCollection extends AppCompatActivity {
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId).collection("my_collection")
                 .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("ProductCollection", "Listen to user collection failed", error);
+                        return;
+                    }
                     if (value != null) {
                         myProductsList.clear();
                         for (QueryDocumentSnapshot doc : value) {
@@ -116,11 +123,17 @@ public class ProductCollection extends AppCompatActivity {
     }
 
     private void fetchAllCatalogProducts() {
-        db.collection("products").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
+        db.collection("products").addSnapshotListener((value, error) -> {
+            if (error != null) {
+                Log.e("ProductCollection", "Listen to products failed", error);
+                return;
+            }
+            if (value != null) {
                 allProductsCatalog.clear();
-                for (QueryDocumentSnapshot doc : task.getResult()) {
+                for (QueryDocumentSnapshot doc : value) {
                     Product p = doc.toObject(Product.class);
+                    // This ensures that even if 'id' field is missing in Firestore document fields,
+                    // we still have the ID from the document reference itself.
                     if (p.getId() == null) p.setId(doc.getId());
                     allProductsCatalog.add(p);
                 }
@@ -136,6 +149,7 @@ public class ProductCollection extends AppCompatActivity {
             return;
         }
 
+        if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
         for (Product product : selected) {
             db.collection("users").document(userId)
@@ -147,6 +161,7 @@ public class ProductCollection extends AppCompatActivity {
     }
 
     private void removeProductFromCollection(Product product) {
+        if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId)
                 .collection("my_collection")
