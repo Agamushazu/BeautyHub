@@ -2,6 +2,7 @@ package com.example.beautyhub;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,16 +16,19 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BuildLookActivity extends AppCompatActivity {
 
+    private static final String TAG = "BUILD_LOOK_DEBUG";
     private TextInputEditText etStyleQuery;
     private RecyclerView rvResults;
     private TextView tvNoResults, tvResultsTitle;
     private TipsAdapter adapter;
-    private List<Tip> allTips;
-    private List<Product> userProducts;
+    private List<Tip> allTips = new ArrayList<>();
+    private List<Product> userProducts = new ArrayList<>();
     private FirebaseFirestore db;
     private String userId;
 
@@ -37,7 +41,7 @@ public class BuildLookActivity extends AppCompatActivity {
         userId = FirebaseAuth.getInstance().getUid();
 
         initViews();
-        loadTipsFromFirestore(); // טעינת הטיפים מה-Firestore במקום setupData
+        loadTipsFromFirestore();
         setupRecyclerView();
         setupBottomNavigation();
         loadUserProducts();
@@ -48,8 +52,6 @@ public class BuildLookActivity extends AppCompatActivity {
         rvResults = findViewById(R.id.rv_look_results);
         tvNoResults = findViewById(R.id.tv_no_results);
         tvResultsTitle = findViewById(R.id.tv_results_title);
-        allTips = new ArrayList<>();
-        userProducts = new ArrayList<>();
 
         findViewById(R.id.btn_generate_look).setOnClickListener(v -> generateLook());
     }
@@ -58,10 +60,27 @@ public class BuildLookActivity extends AppCompatActivity {
         db.collection("tips").get().addOnSuccessListener(queryDocumentSnapshots -> {
             allTips.clear();
             for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                Tip tip = doc.toObject(Tip.class);
+                // Manual mapping to be safe with field names
+                Map<String, Object> data = doc.getData();
+                Tip tip = new Tip();
+                tip.setTitle((String) data.get("title"));
+                tip.setDescription((String) data.get("description"));
+                tip.setVideoUrl((String) data.get("videoUrl"));
+                
+                String cat = data.containsKey("Category") ? (String) data.get("Category") : (String) data.get("category");
+                String val = data.containsKey("CategoryValue") ? (String) data.get("CategoryValue") : (String) data.get("categoryValue");
+                
+                tip.setCategory(cat);
+                tip.setCategoryValue(val);
+                
+                if (data.containsKey("requiredProducts")) {
+                    tip.setRequiredProducts((List<String>) data.get("requiredProducts"));
+                }
+                
                 allTips.add(tip);
             }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to load tips from database", Toast.LENGTH_SHORT).show());
+            Log.d(TAG, "Loaded " + allTips.size() + " tips for Build Look");
+        });
     }
 
     private void setupRecyclerView() {
@@ -90,22 +109,24 @@ public class BuildLookActivity extends AppCompatActivity {
         if (userId == null) return;
 
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            String skin = doc.getString("skinTone");
-            String eyes = doc.getString("eyeColor");
-            String face = doc.getString("faceShape");
-            String brows = doc.getString("eyebrowsShape");
+            Map<String, String> userTraits = new HashMap<>();
+            String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
+            for (String field : fields) {
+                String val = doc.getString(field);
+                if (val != null) userTraits.put(field, val);
+            }
+            
+            Log.d(TAG, "User Traits for build look: " + userTraits);
             
             List<Tip> filtered = new ArrayList<>();
             for (Tip tip : allTips) {
-                // 1. התאמה לשאילתת החיפוש (כותרת או תיאור מה-Firestore)
                 boolean matchesStyle = (tip.getTitle() != null && tip.getTitle().toLowerCase().contains(query)) || 
                                        (tip.getDescription() != null && tip.getDescription().toLowerCase().contains(query));
                 
-                // 2. התאמה למאפיינים האישיים (צבע עיניים, עור וכו')
-                boolean matchesTraits = tip.matches(skin, eyes, face, brows);
-
-                // 3. בדיקה אם יש למשתמש את המוצרים הנדרשים (אם הוגדרו ב-Tip)
+                boolean matchesTraits = tip.matches(userTraits);
                 boolean hasRequiredProducts = checkUserHasProducts(tip.getRequiredProducts());
+
+                Log.d(TAG, "Checking Tip: " + tip.getTitle() + " | Category: " + tip.getCategory() + " | Matches Style: " + matchesStyle + " | Matches Traits: " + matchesTraits);
 
                 if (matchesStyle && matchesTraits && hasRequiredProducts) {
                     filtered.add(tip);
@@ -138,7 +159,6 @@ public class BuildLookActivity extends AppCompatActivity {
             rvResults.setVisibility(View.GONE);
             tvResultsTitle.setVisibility(View.GONE);
             tvNoResults.setVisibility(View.VISIBLE);
-            tvNoResults.setText("No looks found that match your style, features, and owned products.");
         } else {
             adapter.updateList(results);
             rvResults.setVisibility(View.VISIBLE);

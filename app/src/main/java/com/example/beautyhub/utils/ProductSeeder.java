@@ -12,19 +12,22 @@ public class ProductSeeder {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         List<Product> products = new ArrayList<>();
 
-        // Eyes
-        products.add(createProduct("Sky High Mascara", "Maybelline", "Eyes", "Mascara", "Sky high lash impact from every angle!", "https://www.maybelline.com/~/media/mny/us/eye-makeup/mascara/lash-sensational-sky-high-washable-mascara/maybelline-mascara-lash-sensational-sky-high-washable-very-black-041554590518-c.jpg"));
-        products.add(createProduct("Epic Ink Liner", "NYX Professional Makeup", "Eyes", "Eyeliner", "A waterproof liquid eyeliner with a slender and supple brush tip.", "https://www.nyxcosmetics.com/dw/image/v2/AANG_PRD/on/demandware.static/-/Sites-cp-nyxcosmetics-master-catalog/default/dw0695027a/ProductImages/2017/Eyes/Epic_Ink_Liner/800897085605_epicinkliner_black_main.jpg"));
-        products.add(createProduct("Modern Renaissance Palette", "Anastasia Beverly Hills", "Eyes", "Eyeshadow", "An essential eyeshadow palette featuring 14 full-pigment shades.", "https://www.anastasiabeverlyhills.com/dw/image/v2/BBXQ_PRD/on/demandware.static/-/Sites-abh-master-catalog/default/dw6c6b3e9a/images/products/ABH01-18170/ABH01-18170_v1.jpg"));
-
-        // Face & Complexion
+        // --- FACE & COMPLEXION ---
         products.add(createProduct("Double Wear Foundation", "Estee Lauder", "Face & Complexion", "Foundation", "24-hour staying power. Flawless, natural, matte finish.", "https://www.esteelauder.com/media/export/cms/products/640x600/el_sku_1G5Y01_640x600_0.jpg"));
         products.add(createProduct("Shape Tape Concealer", "Tarte", "Face & Complexion", "Concealer", "Full coverage concealer with a natural matte finish.", "https://tartecosmetics.com/dw/image/v2/BBPW_PRD/on/demandware.static/-/Sites-master-catalog-tarte/default/dw14c6e8e7/836/836_Power_Main.jpg"));
-        products.add(createProduct("Soft Pinch Liquid Blush", "Rare Beauty", "Face & Complexion", "Blush", "A weightless, long-lasting liquid blush that blends and builds beautifully.", "https://www.rarebeauty.com/cdn/shop/products/Liquid-Blush-Belief-RENDER_1.jpg"));
-        products.add(createProduct("All Nighter Setting Spray", "Urban Decay", "Face & Complexion", "Setting Spray", "Award-winning makeup setting spray that keeps makeup looking fresh for up to 16 hours.", "https://www.urbandecay.com/dw/image/v2/AABV_PRD/on/demandware.static/-/Sites-urbandecay-master-catalog/default/dw9e6d8a3a/product/AllNighter/3605971440051_allnighter_settingspray_118ml.jpg"));
+        products.add(createProduct("Photo Finish Primer", "Smashbox", "Face & Complexion", "Primer", "A transparent face primer gel that smoothes skin and blurs flaws.", "https://www.smashbox.com/media/export/cms/products/640x600/sbx_sku_60165_640x600_0.jpg"));
 
-        // Lips
-        products.add(createProduct("Matte Lipstick - Velvet Teddy", "MAC", "Lips", "Lipstick", "A creamy rich formula with high colour pay-off in a no-shine matte finish.", "https://www.maccosmetics.com/media/export/cms/products/640x600/mac_sku_M2LP11_640x600_0.jpg"));
+        // --- EYES ---
+        products.add(createProduct("Epic Ink Liner", "NYX Professional Makeup", "Eyes", "Eyeliner", "A waterproof liquid eyeliner with a slender and supple brush tip.", "https://www.nyxcosmetics.com/dw/image/v2/AANG_PRD/on/demandware.static/-/Sites-cp-nyxcosmetics-master-catalog/default/dw0695027a/ProductImages/2017/Eyes/Epic_Ink_Liner/800897085605_epicinkliner_black_main.jpg"));
+        products.add(createProduct("Clear Brow Gel", "Anastasia Beverly Hills", "Eyes", "Eyebrow Gel", "A lightweight clear gel that sets brow color and holds brow hairs in place.", "https://www.anastasiabeverlyhills.com/dw/image/v2/BBXQ_PRD/on/demandware.static/-/Sites-abh-master-catalog/default/dw837486e0/images/products/ABH01-18111/ABH01-18111_v1.jpg"));
+        products.add(createProduct("Brow Wiz", "Anastasia Beverly Hills", "Eyes", "Eyebrow Pencil", "An ultra-slim, retractable eyebrow pencil for detailing and creating hair-like strokes.", "https://www.anastasiabeverlyhills.com/dw/image/v2/BBXQ_PRD/on/demandware.static/-/Sites-abh-master-catalog/default/dw3253b925/images/products/ABH01-18101/ABH01-18101_v1.jpg"));
+        products.add(createProduct("24/7 Glide-On Eye Pencil - Black", "Urban Decay", "Eyes", "Eye Pencil", "Award-winning waterproof eyeliner pencil in Perversion (Black).", "https://www.urbandecay.com/dw/image/v2/AABV_PRD/on/demandware.static/-/Sites-urbandecay-master-catalog/default/dwf2b9048a/product/247GlideOnEyePencil/3605970258251_247glideoneyepencil_perversion.jpg"));
+        products.add(createProduct("24/7 Glide-On Eye Pencil - Brown", "Urban Decay", "Eyes", "Eye Pencil", "Award-winning waterproof eyeliner pencil in Whiskey (Brown).", "https://www.urbandecay.com/dw/image/v2/AABV_PRD/on/demandware.static/-/Sites-urbandecay-master-catalog/default/dwf2b9048a/product/247GlideOnEyePencil/3605970258329_247glideoneyepencil_whiskey.jpg"));
+
+        // --- LIPS ---
+        products.add(createProduct("Gloss Bomb Universal Lip Luminizer", "Fenty Beauty", "Lips", "Lip Gloss", "The ultimate gotta-have-it lip gloss with explosive shine.", "https://www.fentybeauty.com/dw/image/v2/BBSG_PRD/on/demandware.static/-/Sites-itemmaster_fenty/default/dwf5567c9c/all-images/22742/22742_primary.jpg"));
+        products.add(createProduct("Matte Lipstick", "MAC", "Lips", "Lipstick", "A creamy rich formula with high colour pay-off in a no-shine matte finish.", "https://www.maccosmetics.com/media/export/cms/products/640x600/mac_sku_M2LP11_640x600_0.jpg"));
+        products.add(createProduct("Lip Cheat Liner", "Charlotte Tilbury", "Lips", "Lip Liner", "A rich, velvety lip liner to reshape and resize the look of your lips.", "https://www.charlottetilbury.com/media/catalog/product/l/i/lip-cheat-pillow-talk-packshot.jpg"));
 
         for (Product p : products) {
             db.collection("products")

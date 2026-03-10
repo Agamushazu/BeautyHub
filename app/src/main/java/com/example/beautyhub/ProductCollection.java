@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.beautyhub.utils.Product;
 import com.example.beautyhub.utils.ProductAdapter;
 import com.example.beautyhub.utils.ProductSeeder;
+import com.example.beautyhub.utils.TipSeeder;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -58,8 +59,11 @@ public class ProductCollection extends AppCompatActivity {
         fetchUserCollection();
         fetchAllCatalogProducts();
 
-        // Optional: Run this once if you need to re-upload the missing products
+        // RUN THESE ONCE TO UPLOAD DATA, THEN COMMENT THEM OUT
         // ProductSeeder.seedDatabase();
+        
+        // Pass 'this' as context to see errors on screen
+        TipSeeder.seedTips(this);
 
         btnAddProduct.setOnClickListener(v -> saveSelectedToCollection());
         btnBack.setOnClickListener(v -> finish());
@@ -132,8 +136,6 @@ public class ProductCollection extends AppCompatActivity {
                 allProductsCatalog.clear();
                 for (QueryDocumentSnapshot doc : value) {
                     Product p = doc.toObject(Product.class);
-                    // This ensures that even if 'id' field is missing in Firestore document fields,
-                    // we still have the ID from the document reference itself.
                     if (p.getId() == null) p.setId(doc.getId());
                     allProductsCatalog.add(p);
                 }

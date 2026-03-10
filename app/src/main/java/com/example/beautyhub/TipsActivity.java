@@ -2,29 +2,37 @@ package com.example.beautyhub;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.beautyhub.utils.BeautyPost;
+import com.example.beautyhub.utils.TipSeeder;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TipsActivity extends AppCompatActivity {
 
+    private static final String TAG = "TIPS_DEBUG";
     private RecyclerView recyclerAll, recyclerRecommended;
     private TipsAdapter adapterAll, adapterRecommended;
-    private List<Tip> allTipsList;
+    private List<Tip> allTipsList = new ArrayList<>();
+    private Map<String, String> userTraitsMap = new HashMap<>();
     private TextView tvRecommendedTitle;
     private FirebaseFirestore db;
     private String userId;
+    
+    private ListenerRegistration tipsListener, userListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,13 +43,23 @@ public class TipsActivity extends AppCompatActivity {
         userId = FirebaseAuth.getInstance().getUid();
 
         tvRecommendedTitle = findViewById(R.id.tv_recommended_title);
-        allTipsList = new ArrayList<>();
         
         setupRecyclerViews();
         setupSearchView();
         setupBottomNavigation();
-        
-        loadTipsFromFirestore();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startListening();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (tipsListener != null) tipsListener.remove();
+        if (userListener != null) userListener.remove();
     }
 
     private void setupRecyclerViews() {
@@ -56,97 +74,74 @@ public class TipsActivity extends AppCompatActivity {
         recyclerRecommended.setAdapter(adapterRecommended);
     }
 
-    private void loadTipsFromFirestore() {
-        db.collection("tips").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
+    private void startListening() {
+        tipsListener = db.collection("tips").addSnapshotListener((value, error) -> {
+            if (error != null) return;
+            if (value != null) {
                 allTipsList.clear();
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    Tip tip = document.toObject(Tip.class);
-                    allTipsList.add(tip);
+                for (QueryDocumentSnapshot document : value) {
+                    allTipsList.add(mapToTip(document.getData()));
                 }
+                if (allTipsList.isEmpty()) TipSeeder.seedTips(this);
                 adapterAll.updateList(allTipsList);
-                loadUserPreferencesAndFilter();
-            } else {
-                Toast.makeText(this, "Error loading tips", Toast.LENGTH_SHORT).show();
+                updateRecommendations();
             }
         });
+
+        if (userId != null) {
+            userListener = db.collection("users").document(userId).addSnapshotListener((doc, error) -> {
+                if (error != null || doc == null || !doc.exists()) return;
+                
+                userTraitsMap.clear();
+                String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
+                for (String field : fields) {
+                    String val = doc.getString(field);
+                    if (val != null) userTraitsMap.put(field, val);
+                }
+                updateRecommendations();
+            });
+        }
     }
 
-    private void loadUserPreferencesAndFilter() {
-        if (userId == null) return;
+    private Tip mapToTip(Map<String, Object> data) {
+        Tip tip = new Tip();
+        tip.setTitle((String) data.get("title"));
+        tip.setDescription((String) data.get("description"));
+        tip.setVideoUrl((String) data.get("videoUrl"));
+        tip.setCategory(data.containsKey("Category") ? (String) data.get("Category") : (String) data.get("category"));
+        tip.setCategoryValue(data.containsKey("CategoryValue") ? (String) data.get("CategoryValue") : (String) data.get("categoryValue"));
+        return tip;
+    }
 
-        db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            if (doc.exists()) {
-                List<String> userTraits = new ArrayList<>();
-                if (doc.contains("skinTone")) userTraits.add(doc.getString("skinTone"));
-                if (doc.contains("eyeColor")) userTraits.add(doc.getString("eyeColor"));
-                if (doc.contains("eyeShape")) userTraits.add(doc.getString("eyeShape"));
-                if (doc.contains("hairColor")) userTraits.add(doc.getString("hairColor"));
-                if (doc.contains("eyebrowsShape")) userTraits.add(doc.getString("eyebrowsShape"));
-                if (doc.contains("lipsSize")) userTraits.add(doc.getString("lipsSize"));
-                if (doc.contains("faceShape")) userTraits.add(doc.getString("faceShape"));
+    private void updateRecommendations() {
+        if (allTipsList.isEmpty() || userTraitsMap.isEmpty()) {
+            tvRecommendedTitle.setVisibility(View.GONE);
+            recyclerRecommended.setVisibility(View.GONE);
+            return;
+        }
 
-                final List<Tip> recommendedList = new ArrayList<>();
-
-                for (Tip tip : allTipsList) {
-                    if (tip.matches(userTraits.toArray(new String[0]))) {
-                        recommendedList.add(tip);
-                    }
-                }
-
-                db.collection("posts")
-                    .whereEqualTo("tip", true) // Corrected from "isTip" to "tip"
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                        for (QueryDocumentSnapshot postDoc : queryDocumentSnapshots) {
-                            BeautyPost post = postDoc.toObject(BeautyPost.class);
-                            
-                            if (post.getTags() != null) {
-                                boolean isMatch = false;
-                                for (String tag : post.getTags()) {
-                                    for (String trait : userTraits) {
-                                        if (trait != null && trait.equalsIgnoreCase(tag)) {
-                                            isMatch = true;
-                                            break;
-                                        }
-                                    }
-                                    if (isMatch) break;
-                                }
-
-                                if (isMatch) {
-                                    Tip tipFromPost = new Tip();
-                                    tipFromPost.setTitle(post.getTitle() + " (by " + post.getOwnerNickname() + ")");
-                                    tipFromPost.setDescription(post.getDescription());
-                                    tipFromPost.setVideoUrl(post.getPostImageUrl());
-                                    recommendedList.add(tipFromPost);
-                                }
-                            }
-                        }
-
-                        if (!recommendedList.isEmpty()) {
-                            adapterRecommended.updateList(recommendedList);
-                            tvRecommendedTitle.setVisibility(View.VISIBLE);
-                            recyclerRecommended.setVisibility(View.VISIBLE);
-                        } else {
-                            tvRecommendedTitle.setVisibility(View.GONE);
-                            recyclerRecommended.setVisibility(View.GONE);
-                        }
-                    });
+        final List<Tip> recommendedList = new ArrayList<>();
+        for (Tip tip : allTipsList) {
+            if (tip.matches(userTraitsMap)) {
+                recommendedList.add(tip);
             }
-        });
+        }
+
+        if (!recommendedList.isEmpty()) {
+            adapterRecommended.updateList(recommendedList);
+            tvRecommendedTitle.setVisibility(View.VISIBLE);
+            recyclerRecommended.setVisibility(View.VISIBLE);
+        } else {
+            tvRecommendedTitle.setVisibility(View.GONE);
+            recyclerRecommended.setVisibility(View.GONE);
+        }
     }
 
     private void setupSearchView() {
         SearchView searchView = findViewById(R.id.search_view_tips);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                adapterAll.filter(query);
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
                 adapterAll.filter(newText);
                 return false;
             }
@@ -158,19 +153,9 @@ public class TipsActivity extends AppCompatActivity {
         bottomNav.setSelectedItemId(R.id.nav_tips);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_feed) { 
-                startActivity(new Intent(this, FeedActivity.class)); 
-                finish();
-                return true; 
-            } else if (id == R.id.nav_profile) { 
-                startActivity(new Intent(this, ProfileActivity.class)); 
-                finish();
-                return true; 
-            } else if (id == R.id.nav_build_look) {
-                startActivity(new Intent(this, BuildLookActivity.class));
-                finish();
-                return true;
-            }
+            if (id == R.id.nav_feed) { startActivity(new Intent(this, FeedActivity.class)); finish(); return true; }
+            if (id == R.id.nav_profile) { startActivity(new Intent(this, ProfileActivity.class)); finish(); return true; }
+            if (id == R.id.nav_build_look) { startActivity(new Intent(this, BuildLookActivity.class)); finish(); return true; }
             return id == R.id.nav_tips;
         });
     }

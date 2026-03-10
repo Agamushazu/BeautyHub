@@ -3,6 +3,7 @@ package com.example.beautyhub;
 import com.google.firebase.firestore.PropertyName;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Tip {
     private String title;
@@ -10,11 +11,8 @@ public class Tip {
     private String category;
     private String categoryValue;
     private String videoUrl;
-    private int imageResId;
-    private List<String> tags = new ArrayList<>();
     private List<String> requiredProducts = new ArrayList<>();
 
-    // Required empty constructor for Firebase
     public Tip() {}
 
     @PropertyName("title")
@@ -42,24 +40,27 @@ public class Tip {
     @PropertyName("videoUrl")
     public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
 
-    public int getImageResId() { return imageResId; }
-    public void setImageResId(int imageResId) { this.imageResId = imageResId; }
-
-    public List<String> getTags() { return tags; }
-    public void setTags(List<String> tags) { this.tags = tags; }
-
+    @PropertyName("requiredProducts")
     public List<String> getRequiredProducts() { return requiredProducts; }
+    @PropertyName("requiredProducts")
     public void setRequiredProducts(List<String> requiredProducts) { this.requiredProducts = requiredProducts; }
 
-    public boolean matches(String... userTraits) {
-        if (categoryValue != null && userTraits != null) {
-            for (String trait : userTraits) {
-                if (trait != null && categoryValue.equalsIgnoreCase(trait)) return true;
-            }
+    public boolean matches(Map<String, String> userTraitsMap) {
+        if (category == null || categoryValue == null || userTraitsMap == null) return false;
+
+        String userField = "";
+        switch (category) {
+            case "Eye Color": userField = "eyeColor"; break;
+            case "Eye Shape": userField = "eyeShape"; break;
+            case "Face Shape": userField = "faceShape"; break;
+            case "Eyebrows": userField = "eyebrowsShape"; break;
+            case "Skin Tone": userField = "skinTone"; break;
         }
-        if (tags != null && userTraits != null) {
-            for (String trait : userTraits) {
-                if (trait != null && tags.contains(trait)) return true;
+
+        if (userTraitsMap.containsKey(userField)) {
+            String userVal = userTraitsMap.get(userField);
+            if (userVal != null) {
+                return categoryValue.equalsIgnoreCase(userVal.trim());
             }
         }
         return false;
