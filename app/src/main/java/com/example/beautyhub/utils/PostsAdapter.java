@@ -1,23 +1,41 @@
 package com.example.beautyhub.utils;
 
+import android.content.Intent;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.example.beautyhub.OtherUserProfileActivity;
+import com.example.beautyhub.PostDetailActivity;
 import com.example.beautyhub.R;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
 
     private List<BeautyPost> posts;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private Comment replyingTo = null;
 
     public PostsAdapter(List<BeautyPost> posts) { this.posts = posts; }
 
@@ -35,7 +53,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvDesc.setText(post.getDescription());
         holder.tvOwner.setText("By: " + post.getOwnerNickname());
 
-        // הצגת תג "Guide" אם הפוסט הוא טיפ
         if (post.isTip()) {
             holder.tvRole.setVisibility(View.VISIBLE);
             holder.tvRole.setText("Guide • Tip");
@@ -49,7 +66,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.tvDate.setText(sdf.format(post.getCreatedAt().toDate()));
         }
 
-        // תמונת פרופיל
+        // Profile Image
         String profPath = post.getOwnerProfileImageUrl();
         if (profPath != null && !profPath.isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -61,7 +78,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.ivProfile.setImageResource(R.drawable.ic_launcher_background);
         }
 
-        // תמונת פוסט
+        // Post Image
         if (post.getPostImageUrl() != null && !post.getPostImageUrl().isEmpty()) {
             holder.ivPost.setVisibility(View.VISIBLE);
             Glide.with(holder.itemView.getContext())
@@ -71,14 +88,107 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         } else {
             holder.ivPost.setVisibility(View.GONE);
         }
+
+        // לחיצה על שם המשתמש או תמונת הפרופיל שלו תעביר לפרופיל שלו
+        View.OnClickListener openProfileListener = v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), OtherUserProfileActivity.class);
+            intent.putExtra("userId", post.getOwnerUid());
+            holder.itemView.getContext().startActivity(intent);
+        };
+        holder.tvOwner.setOnClickListener(openProfileListener);
+        holder.ivProfile.setOnClickListener(openProfileListener);
+
+        // הגדרת לחיצה על שאר הפוסט לכניסה לפירוט
+        View.OnClickListener openDetailListener = v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), PostDetailActivity.class);
+            intent.putExtra("postId", post.getPostId());
+            holder.itemView.getContext().startActivity(intent);
+        };
+
+        holder.itemView.setOnClickListener(openDetailListener);
+        holder.tvTitle.setOnClickListener(openDetailListener);
+        holder.tvDesc.setOnClickListener(openDetailListener);
+        holder.ivPost.setOnClickListener(openDetailListener);
+        holder.tvCommentsCount.setOnClickListener(openDetailListener);
+
+        // --- COMMENTS LOGIC ---
+        setupComments(holder, post);
+    }
+
+    private void setupComments(PostViewHolder holder, BeautyPost post) {
+        List<Comment> commentsList = new ArrayList<>();
+        CommentsAdapter commentsAdapter = new CommentsAdapter(commentsList, post.getOwnerUid(), post.getPostId(), parentComment -> {
+            replyingTo = parentComment;
+            holder.etComment.setHint("Replying to " + parentComment.getUserNickname() + "...");
+            holder.etComment.requestFocus();
+        });
+        
+        holder.rvComments.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
+        holder.rvComments.setAdapter(commentsAdapter);
+
+        if (post.getPostId() != null) {
+            db.collection("posts").document(post.getPostId()).collection("comments")
+                    .whereEqualTo("parentCommentId", null)
+                    .orderBy("createdAt", Query.Direction.ASCENDING)
+                    .limit(3) 
+                    .addSnapshotListener((value, error) -> {
+                        if (error != null || value == null) return;
+                        for (DocumentChange dc : value.getDocumentChanges()) {
+                            if (dc.getType() == DocumentChange.Type.ADDED) {
+                                Comment c = dc.getDocument().toObject(Comment.class);
+                                c.setCommentId(dc.getDocument().getId());
+                                commentsList.add(c);
+                                commentsAdapter.notifyItemInserted(commentsList.size() - 1);
+                            }
+                        }
+                        holder.tvCommentsCount.setText(commentsList.size() + " Comments (Click to see more)");
+                        holder.rvComments.setVisibility(commentsList.isEmpty() ? View.GONE : View.VISIBLE);
+                    });
+        }
+
+        holder.btnSendComment.setOnClickListener(v -> {
+            String commentText = holder.etComment.getText().toString().trim();
+            if (TextUtils.isEmpty(commentText)) return;
+
+            if (auth.getCurrentUser() == null) {
+                Toast.makeText(holder.itemView.getContext(), "Please login to comment", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String uid = auth.getCurrentUser().getUid();
+            
+            db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+                String nickname = documentSnapshot.getString("nickname");
+                if (nickname == null) nickname = "User";
+
+                Map<String, Object> commentMap = new HashMap<>();
+                commentMap.put("userUid", uid);
+                commentMap.put("userNickname", nickname);
+                commentMap.put("text", commentText);
+                commentMap.put("createdAt", Timestamp.now());
+                commentMap.put("parentCommentId", replyingTo != null ? replyingTo.getCommentId() : null);
+
+                db.collection("posts").document(post.getPostId()).collection("comments")
+                        .add(commentMap)
+                        .addOnSuccessListener(documentReference -> {
+                            holder.etComment.setText("");
+                            holder.etComment.setHint("Add a comment...");
+                            replyingTo = null;
+                        });
+            });
+        });
     }
 
     @Override
     public int getItemCount() { return posts.size(); }
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvDesc, tvOwner, tvDate, tvRole;
+        TextView tvTitle, tvDesc, tvOwner, tvDate, tvRole, tvCommentsCount;
         ImageView ivPost, ivProfile;
+        RecyclerView rvComments;
+        EditText etComment;
+        ImageButton btnSendComment;
+
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_post_title);
@@ -88,6 +198,11 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             tvRole = itemView.findViewById(R.id.tv_post_role);
             ivPost = itemView.findViewById(R.id.iv_post_image);
             ivProfile = itemView.findViewById(R.id.iv_owner_profile);
+            
+            tvCommentsCount = itemView.findViewById(R.id.tv_comments_count);
+            rvComments = itemView.findViewById(R.id.rv_comments);
+            etComment = itemView.findViewById(R.id.et_comment);
+            btnSendComment = itemView.findViewById(R.id.btn_send_comment);
         }
     }
 }

@@ -37,16 +37,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Owner Name"
-                    android:textStyle="bold"
-                    android:textColor="#3E2723" />
+                    android:textColor="#3E2723"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_post_role"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Guide"
-                    android:textSize="12sp"
                     android:textColor="#D86B8C"
+                    android:textSize="12sp"
                     android:textStyle="italic|bold"
                     android:visibility="gone" />
 
@@ -54,8 +54,8 @@
                     android:id="@+id/tv_post_created_at"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
-                    android:text="Just now" />
+                    android:text="Just now"
+                    android:textSize="10sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -64,9 +64,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:textColor="#A64452"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#A64452" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_post_description"
@@ -80,10 +80,66 @@
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_marginTop="10dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
+            android:background="@drawable/rounded_edittext"
             android:clipToOutline="true"
-            android:background="@drawable/rounded_edittext" />
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:background="#EEEEEE" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_comments_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comments"
+                android:textColor="#777777"
+                android:textSize="12sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_comments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/layout_add_comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/et_comment"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/input_field_rounded"
+                    android:hint="Add a comment..."
+                    android:padding="10dp"
+                    android:textSize="14sp" />
+
+                <ImageButton
+                    android:id="@+id/btn_send_comment"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_send"
+                    app:tint="#A64452" />
+            </LinearLayout>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp;
 import java.util.List;
 
 public class BeautyPost {
+    private String postId;
     private String title;
     private String description;
     private String ownerUid;
@@ -16,11 +17,12 @@ public class BeautyPost {
 
     public BeautyPost() {}
 
-    public BeautyPost(String title, String description, String ownerUid, String ownerNickname, String ownerProfileImageUrl, Timestamp createdAt, String postImageUrl) {
-        this(title, description, ownerUid, ownerNickname, ownerProfileImageUrl, createdAt, postImageUrl, null, false);
+    public BeautyPost(String postId, String title, String description, String ownerUid, String ownerNickname, String ownerProfileImageUrl, Timestamp createdAt, String postImageUrl) {
+        this(postId, title, description, ownerUid, ownerNickname, ownerProfileImageUrl, createdAt, postImageUrl, null, false);
     }
 
-    public BeautyPost(String title, String description, String ownerUid, String ownerNickname, String ownerProfileImageUrl, Timestamp createdAt, String postImageUrl, List<String> tags, boolean isTip) {
+    public BeautyPost(String postId, String title, String description, String ownerUid, String ownerNickname, String ownerProfileImageUrl, Timestamp createdAt, String postImageUrl, List<String> tags, boolean isTip) {
+        this.postId = postId;
         this.title = title;
         this.description = description;
         this.ownerUid = ownerUid;
@@ -32,6 +34,8 @@ public class BeautyPost {
         this.isTip = isTip;
     }
 
+    public String getPostId() { return postId; }
+    public void setPostId(String postId) { this.postId = postId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public String getOwnerUid() { return ownerUid; }

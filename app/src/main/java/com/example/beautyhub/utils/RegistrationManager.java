@@ -23,6 +23,7 @@ public class RegistrationManager {
 
     int age;
     String nickname;
+    String gender;
     int level;
     boolean isGuide;
 
@@ -52,6 +53,7 @@ public class RegistrationManager {
                                   String password,
                                   String nickname,
                                   int age,
+                                  String gender,
                                   int level,
                                   boolean isGuide,
                                   File imageFile,
@@ -61,6 +63,7 @@ public class RegistrationManager {
         this.password = password;
         this.nickname = nickname;
         this.age = age;
+        this.gender = gender;
         this.level = level;
         this.isGuide = isGuide;
         this.imageFile = imageFile;
@@ -166,10 +169,12 @@ public class RegistrationManager {
     }
 
     private void saveUserToFirestore() {
-        Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname + ", Age: " + age + ", Level: " + level + ", IsGuide: " + isGuide);
+        Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname + ", Age: " + age + ", Level: " + level + ", IsGuide: " + isGuide + ", Gender: " + gender);
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("nickname", nickname);
+        userMap.put("email", email);
         userMap.put("age", age);
+        userMap.put("gender", gender);
         userMap.put("level", level);
         userMap.put("isGuide", isGuide);
         FirebaseFirestore db = FirebaseFirestore.getInstance();

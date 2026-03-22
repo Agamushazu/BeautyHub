@@ -23,7 +23,7 @@ public class ProfileActivity extends AppCompatActivity {
     private UserImageSelector imageSelector;
     private ImageView ivUserProfilePic;
     private TextView tvUsername, tvUserRole;
-    private MaterialButton btnSetProfilePic;
+    private MaterialButton btnSetProfilePic, btnAdminPanel;
     private FirebaseFirestore db;
     private String userId;
     private File pendingImageFile;
@@ -39,6 +39,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvUsername = findViewById(R.id.tv_username);
         tvUserRole = findViewById(R.id.tv_user_role);
         btnSetProfilePic = findViewById(R.id.btn_set_profile_pic);
+        btnAdminPanel = findViewById(R.id.btn_admin_panel);
 
         loadUserProfileData();
 
@@ -58,6 +59,8 @@ public class ProfileActivity extends AppCompatActivity {
                 uploadProfilePicture(pendingImageFile);
             }
         });
+
+        btnAdminPanel.setOnClickListener(v -> startActivity(new Intent(this, AdminActivity.class)));
 
         setupButtons();
         setupBottomNav();
@@ -110,6 +113,13 @@ public class ProfileActivity extends AppCompatActivity {
                     tvUserRole.setText("Guide");
                 } else {
                     tvUserRole.setVisibility(View.GONE);
+                }
+
+                // בדיקה אם המשתמש הוא מנהל
+                if (doc.contains("isAdmin") && doc.getBoolean("isAdmin")) {
+                    btnAdminPanel.setVisibility(View.VISIBLE);
+                } else {
+                    btnAdminPanel.setVisibility(View.GONE);
                 }
 
                 if (doc.contains("profileImageUrl")) {

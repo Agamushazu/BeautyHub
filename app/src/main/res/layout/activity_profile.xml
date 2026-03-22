@@ -39,101 +39,118 @@
             app:cornerRadius="20dp" />
     </RelativeLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/header_container"
-        android:layout_centerInParent="true"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_above="@id/bottom_navigation"
+        android:layout_below="@id/header_container">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="My Profile"
-            android:textSize="22sp"
-            android:textColor="#3E2723"
-            android:textStyle="bold"
-            android:layout_gravity="center"
-            android:layout_marginBottom="4dp"/>
-
-        <TextView
-            android:id="@+id/tv_user_role"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Guide"
-            android:textSize="14sp"
-            android:textColor="#D86B8C"
-            android:textStyle="italic|bold"
-            android:layout_gravity="center"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone"/>
-
-
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/iv_user_profile_pic"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:layout_marginBottom="8dp"
-            android:padding="2dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_camera"
-            app:shapeAppearanceOverlay="@style/CircleImage"
-            app:strokeColor="#A64452"
-            app:strokeWidth="3dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_set_profile_pic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#A64452"
-            android:text="Set As Profile Picture"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:visibility="gone"
-            app:cornerRadius="20dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_personal_info"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#F4C2C2"
-            android:text="PERSONAL INFORMATION"
-            android:textColor="#3E2723"
-            app:cornerRadius="15dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_collection"
-            android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#FFF9E3"
-            android:text="PRODUCT COLLECTION"
-            android:textColor="#3E2723"
-            app:cornerRadius="15dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_favorites"
-            android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#E3F2FD"
-            android:text="MY FAVORITES"
-            android:textColor="#3E2723"
-            app:cornerRadius="15dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_delete_account"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Delete Account"
-            android:textColor="#A64452"
-            android:textSize="12sp" />
-    </LinearLayout>
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="4dp"
+                android:text="My Profile"
+                android:textColor="#3E2723"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_user_role"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginBottom="16dp"
+                android:text="Guide"
+                android:textColor="#D86B8C"
+                android:textSize="14sp"
+                android:textStyle="italic|bold"
+                android:visibility="gone" />
+
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_user_profile_pic"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_marginBottom="8dp"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_camera"
+                app:shapeAppearanceOverlay="@style/CircleImage"
+                app:strokeColor="#A64452"
+                app:strokeWidth="3dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_set_profile_pic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#A64452"
+                android:text="Set As Profile Picture"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:cornerRadius="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_personal_info"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#F4C2C2"
+                android:text="PERSONAL INFORMATION"
+                android:textColor="#3E2723"
+                app:cornerRadius="15dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_collection"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#FFF9E3"
+                android:text="PRODUCT COLLECTION"
+                android:textColor="#3E2723"
+                app:cornerRadius="15dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_favorites"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#E3F2FD"
+                android:text="MY FAVORITES"
+                android:textColor="#3E2723"
+                app:cornerRadius="15dp" />
+
+            <!-- Admin Button - Hidden by default -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_admin_panel"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="#3E2723"
+                android:text="ADMIN PANEL"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"
+                app:cornerRadius="15dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_delete_account"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete Account"
+                android:textColor="#A64452"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </ScrollView>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

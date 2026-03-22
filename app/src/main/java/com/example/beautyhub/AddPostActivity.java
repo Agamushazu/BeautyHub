@@ -22,6 +22,7 @@ import com.example.beautyhub.utils.SupabaseStorageHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -226,12 +227,19 @@ public class AddPostActivity extends AppCompatActivity {
         String profileImageUrl = sp.getString("profileImageUrl", "");
         String uid = FirebaseAuth.getInstance().getUid();
 
-        BeautyPost post = new BeautyPost(title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl, tags, isTip);
+        // Create a new document reference to get a unique ID
+        DocumentReference docRef = FirebaseFirestore.getInstance().collection("posts").document();
+        String postId = docRef.getId();
+
+        BeautyPost post = new BeautyPost(postId, title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl, tags, isTip);
         
-        FirebaseFirestore.getInstance().collection("posts").add(post)
-                .addOnSuccessListener(doc -> {
+        docRef.set(post)
+                .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Post Published!", Toast.LENGTH_SHORT).show();
                     finish();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to publish post: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
