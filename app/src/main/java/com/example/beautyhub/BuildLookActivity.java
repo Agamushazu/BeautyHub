@@ -9,6 +9,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.beautyhub.utils.GeminiManager;
 import com.example.beautyhub.utils.Product;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -109,31 +111,18 @@ public class BuildLookActivity extends AppCompatActivity {
         if (userId == null) return;
 
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            Map<String, String> userTraits = new HashMap<>();
+            String userTraits = "";
             String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
             for (String field : fields) {
                 String val = doc.getString(field);
-                if (val != null) userTraits.put(field, val);
+                if (val != null)
+                    userTraits += field + ": " + val + ", ";
             }
             
             Log.d(TAG, "User Traits for build look: " + userTraits);
             
-            List<Tip> filtered = new ArrayList<>();
-            for (Tip tip : allTips) {
-                boolean matchesStyle = (tip.getTitle() != null && tip.getTitle().toLowerCase().contains(query)) || 
-                                       (tip.getDescription() != null && tip.getDescription().toLowerCase().contains(query));
-                
-                boolean matchesTraits = tip.matches(userTraits);
-                boolean hasRequiredProducts = checkUserHasProducts(tip.getRequiredProducts());
+            getAiTips(userTraits);
 
-                Log.d(TAG, "Checking Tip: " + tip.getTitle() + " | Category: " + tip.getCategory() + " | Matches Style: " + matchesStyle + " | Matches Traits: " + matchesTraits);
-
-                if (matchesStyle && matchesTraits && hasRequiredProducts) {
-                    filtered.add(tip);
-                }
-            }
-
-            displayResults(filtered);
         });
     }
 
@@ -178,4 +167,86 @@ public class BuildLookActivity extends AppCompatActivity {
             return id == R.id.nav_build_look;
         });
     }
+
+    public void getAiTips(String userAppearance)
+    {
+        String userQuery = etStyleQuery.getText().toString();
+
+        String prompt = getAiTipsPrompt(userQuery, userAppearance);
+        Log.d(TAG, "getAiTips: prompt: " + prompt);
+
+        GeminiManager gemini = GeminiManager.getInstance();
+
+        gemini.sendText(prompt, this,
+                new GeminiManager.GeminiCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        Log.d(TAG, "onSuccess: " + result);
+                        String newText = "";
+
+                            String[] fields = result.split("#");
+                            if (fields.length == 4) {
+
+                                if (!fields[0].equals("NA"))
+                                    newText += "\n" + "General: " + fields[0];
+                                if (!fields[1].equals("NA"))
+                                    newText += "\n" + "Face:   " + fields[1];
+                                if (!fields[2].equals("NA"))
+                                    newText += "\n" + "Eye: " + fields[2];
+                                if (!fields[2].equals("NA"))
+                                    newText += "\n" + "Lip: " + fields[2];
+
+
+                                etStyleQuery.setText(newText);
+                            }
+                            else
+                            {
+                                Log.d(TAG, "onSuccess: Bad Format. fields size: " + fields.length);
+                                Toast.makeText(BuildLookActivity.this, "Error: Bad Format", Toast.LENGTH_LONG).show();
+
+                            }
+
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.d("TAG", "onError: " + error.getMessage());
+
+                        Toast.makeText(BuildLookActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+
+                });
+
+    }
+
+    private String getAiTipsPrompt(String userStyle, String userAppearance)
+    {
+        String prompt = "You are an expert Professional Makeup Artist and Beauty Consultant. Your task is to provide personalized makeup recommendations based on a user's physical characteristics and their desired style.\n" +
+                "\n" +
+                "### INPUT DATA:\n" +
+                "- **Desired Style: %s ** \n" +
+                "- **User Appearance: %s **\n" +
+                "\n" +
+                "### INSTRUCTIONS:\n" +
+                "1. Analyze how the desired style fits the user's specific features.\n" +
+                "2. Provide practical, professional, and aesthetically pleasing tips.\n" +
+                "3. You must provide exactly 4 sections in your response.\n" +
+                "4. **CRITICAL:** Separate each section ONLY with the '#' character. Do not use the '#' character anywhere else in the text.\n" +
+                "5. Do not include any introductory or concluding remarks outside of the four sections.\n" +
+                "\n" +
+                "### RESPONSE STRUCTURE:\n" +
+                "Section 1: A general overview of the look and why it suits the user.\n" +
+                "#\n" +
+                "Section 2: Detailed face makeup tips (foundation, contour, blush, highlight).\n" +
+                "#\n" +
+                "Section 3: Detailed eye makeup tips (eyeshadow, eyeliner, mascara, brows).\n" +
+                "#\n" +
+                "Section 4: Detailed lip makeup tips (liner, lipstick, gloss, finish).\n" +
+                "\n" +
+                "### OUTPUT EXAMPLE (Reference only):\n" +
+                "General description of the look... # Tips for the face... # Tips for the eyes... # Tips for the lips...";
+
+        return prompt.formatted(userStyle, userAppearance);
+    }
+
 }

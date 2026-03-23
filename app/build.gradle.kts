@@ -55,6 +55,12 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.ai)
 
     implementation(libs.reactive.streams)
+
+    // One-shot (Guava ListenableFuture)
+    implementation(libs.guava)
+
+
 }
