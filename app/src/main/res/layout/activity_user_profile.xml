@@ -13,8 +13,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginTop="40dp"
-        android:src="@drawable/ic_launcher_background"
-        app:tint="#A64452" />
+        android:src="@drawable/ic_launcher_background" />
 
     <TextView
         android:id="@+id/tv_username"

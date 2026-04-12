@@ -2,34 +2,37 @@ package com.example.beautyhub.utils;
 
 import static android.app.Activity.RESULT_OK;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
 
 public class UserImageSelector {
 
     private AppCompatActivity activity;
-
     private ImageView imageView;
-
     private Uri imageUri;
     private Bitmap imageBitmap;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private ActivityResultLauncher<Intent> cameraLauncher;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
     private OnImageSelectedListener listener;
     private static final String TAG = "UserImageSelector";
 
@@ -55,98 +58,80 @@ public class UserImageSelector {
                 .setTitle("Select Profile Picture")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        Log.d(TAG, "User chose to take a photo");
-                        openCamera();
+                        checkCameraPermissionAndOpen();
                     } else {
-                        Log.d(TAG, "User chose to pick from gallery");
                         openImagePicker();
                     }
                 })
                 .show();
     }
-    private void openCamera() {
-        Log.d(TAG, "openCamera: start");
 
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraLauncher.launch(cameraIntent);
-        Log.d(TAG, "openCamera: end");
+    private void checkCameraPermissionAndOpen() {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private void openCamera() {
+        try {
+            Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            cameraLauncher.launch(cameraIntent);
+        } catch (Exception e) {
+            Log.e(TAG, "openCamera: failed to launch camera", e);
+            Toast.makeText(activity, "Could not open camera", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openImagePicker() {
-        Log.d(TAG, "openImagePicker: start");
-
-
-        // Launch the photo picker and let the user choose images and videos.
         pickMedia.launch(new PickVisualMediaRequest.Builder()
-                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly
-                        .INSTANCE)
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                 .build());
-
-
-        Log.d(TAG, "openImagePicker: end");
     }
 
     private void initResultLaunchers()
     {
-        Log.d(TAG, "InitResultLaunchers: start");
-        // Registers a photo picker activity launcher in single-select mode.
-        pickMedia =
-                activity.registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                    // Callback is invoked after the user selects a media item or closes the
-                    // photo picker.
-                    if (uri != null) {
-                        Log.d(TAG, "PhotoPicker: Selected URI: " + uri);
-                        this.imageUri = uri;
-                        this.imageBitmap = null; // Clear bitmap if URI is picked
-                        imageView.setImageURI(uri);
-                        if (listener != null) listener.onImageSelected();
-                    } else {
-                        Log.d(TAG, "PhotoPicker: No media selected");
-                    }
-                });
+        pickMedia = activity.registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+            if (uri != null) {
+                this.imageUri = uri;
+                this.imageBitmap = null;
+                imageView.setImageURI(uri);
+                if (listener != null) listener.onImageSelected();
+            }
+        });
 
         cameraLauncher = activity.registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    Log.d(TAG, "Got a camera result");
-                    if (result.getResultCode() == RESULT_OK) {
-                        Log.d(TAG, "Camera result code is ok");
-                        // Handle successful photo capture
-                        Intent data = result.getData();
-                        Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Bitmap bitmap = (Bitmap) result.getData().getExtras().get("data");
                         if (bitmap != null) {
-                            Log.d(TAG, "setting bitmap");
-                            this.imageUri = null; // Clear URI if bitmap is taken
+                            this.imageUri = null;
                             imageView.setImageBitmap(bitmap);
                             this.imageBitmap = bitmap;
                             if (listener != null) listener.onImageSelected();
-                        } else {
-                            Log.e(TAG, "Error retrieving image from camera intent");
                         }
-                    } else {
-                        Log.d(TAG, "Invalid code returned from camera intent");
                     }
                 }
         );
 
-        Log.d(TAG, "InitResultLaunchers: done");
+        requestPermissionLauncher = activity.registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        openCamera();
+                    } else {
+                        Toast.makeText(activity, "Camera permission is required to take photos", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     public File createImageFile()
     {
-        if(imageUri != null)
-        {
-            Log.d(TAG, "createImageFile: creating image from uri");
-            return ImageFileCreator.createTempFileFromUri(imageUri, activity);
-        }
-        else if(imageBitmap != null)
-        {
-            Log.d(TAG, "createImageFile: creating image from bitmap");
-            return ImageFileCreator.createTempFileFromBitmap(imageBitmap, activity);
-        }
-
-        Log.w(TAG, "createImageFile: source is not defined");
+        if(imageUri != null) return ImageFileCreator.createTempFileFromUri(imageUri, activity);
+        else if(imageBitmap != null) return ImageFileCreator.createTempFileFromBitmap(imageBitmap, activity);
         return null;
     }
-
 }

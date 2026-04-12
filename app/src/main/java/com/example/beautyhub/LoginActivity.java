@@ -81,19 +81,21 @@ public class LoginActivity extends AppCompatActivity {
                             saveUserDataLocally(doc.getString("nickname"),
                                     doc.contains("age") ? doc.getLong("age").intValue() : 0,
                                     doc.contains("level") ? doc.getLong("level").intValue() : 0,
-                                    doc.contains("isGuide") && doc.getBoolean("isGuide"));
+                                    doc.contains("isGuide") && doc.getBoolean("isGuide"),
+                                    doc.getString("profileImageUrl"));
                         }
                         startFeedActivity(true);
                     }
                 });
     }
 
-    private void saveUserDataLocally(String nickname, int age, int level, boolean isGuide) {
+    private void saveUserDataLocally(String nickname, int age, int level, boolean isGuide, String profileImageUrl) {
         getSharedPreferences("userInfo", MODE_PRIVATE).edit()
                 .putString("nickname", nickname)
                 .putInt("age", age)
                 .putInt("level", level)
                 .putBoolean("isGuide", isGuide)
+                .putString("profileImageUrl", profileImageUrl)
                 .apply();
     }
 

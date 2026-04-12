@@ -26,6 +26,7 @@ public class RegistrationManager {
     String gender;
     int level;
     boolean isGuide;
+    String profileImageUrl;
 
     private static final String TAG = "RegistrationManager";
 
@@ -159,6 +160,7 @@ public class RegistrationManager {
             public void onResult(boolean success, String url, String error) {
                 if (success) {
                     Log.i(TAG, "Profile picture uploaded successfully to Supabase. Public URL: " + url);
+                    profileImageUrl = url;
                     phaseDone();
                 } else {
                     Log.e(TAG, "Supabase upload failed: " + error);
@@ -177,6 +179,7 @@ public class RegistrationManager {
         userMap.put("gender", gender);
         userMap.put("level", level);
         userMap.put("isGuide", isGuide);
+        userMap.put("profileImageUrl", profileImageUrl);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("users").document(userId)
