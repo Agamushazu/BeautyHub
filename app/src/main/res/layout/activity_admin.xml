@@ -26,6 +26,7 @@
         app:tabSelectedTextColor="#A64452">
         <com.google.android.material.tabs.TabItem android:text="Users"/>
         <com.google.android.material.tabs.TabItem android:text="Posts"/>
+        <com.google.android.material.tabs.TabItem android:text="Products"/>
     </com.google.android.material.tabs.TabLayout>
 
     <androidx.recyclerview.widget.RecyclerView

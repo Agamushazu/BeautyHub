@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.beautyhub.utils.GeminiManager;
 import com.example.beautyhub.utils.Product;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,7 +28,8 @@ public class BuildLookActivity extends AppCompatActivity {
     private static final String TAG = "BUILD_LOOK_DEBUG";
     private TextInputEditText etStyleQuery;
     private RecyclerView rvResults;
-    private TextView tvNoResults, tvResultsTitle;
+    private TextView tvNoResults, tvResultsTitle, tvAiResponseText;
+    private MaterialCardView cardAiResults;
     private TipsAdapter adapter;
     private List<Tip> allTips = new ArrayList<>();
     private List<Product> userProducts = new ArrayList<>();
@@ -54,6 +56,8 @@ public class BuildLookActivity extends AppCompatActivity {
         rvResults = findViewById(R.id.rv_look_results);
         tvNoResults = findViewById(R.id.tv_no_results);
         tvResultsTitle = findViewById(R.id.tv_results_title);
+        tvAiResponseText = findViewById(R.id.tv_ai_response_text);
+        cardAiResults = findViewById(R.id.card_ai_results);
 
         findViewById(R.id.btn_generate_look).setOnClickListener(v -> generateLook());
     }
@@ -62,7 +66,6 @@ public class BuildLookActivity extends AppCompatActivity {
         db.collection("tips").get().addOnSuccessListener(queryDocumentSnapshots -> {
             allTips.clear();
             for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                // Manual mapping to be safe with field names
                 Map<String, Object> data = doc.getData();
                 Tip tip = new Tip();
                 tip.setTitle((String) data.get("title"));
@@ -81,7 +84,6 @@ public class BuildLookActivity extends AppCompatActivity {
                 
                 allTips.add(tip);
             }
-            Log.d(TAG, "Loaded " + allTips.size() + " tips for Build Look");
         });
     }
 
@@ -102,7 +104,7 @@ public class BuildLookActivity extends AppCompatActivity {
     }
 
     private void generateLook() {
-        String query = etStyleQuery.getText().toString().trim().toLowerCase();
+        String query = etStyleQuery.getText().toString().trim();
         if (query.isEmpty()) {
             Toast.makeText(this, "Please enter a style", Toast.LENGTH_SHORT).show();
             return;
@@ -110,50 +112,19 @@ public class BuildLookActivity extends AppCompatActivity {
 
         if (userId == null) return;
 
+        tvNoResults.setText("Generating your personalized look... please wait.");
+        tvNoResults.setVisibility(View.VISIBLE);
+        cardAiResults.setVisibility(View.GONE);
+
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            String userTraits = "";
+            StringBuilder userTraits = new StringBuilder();
             String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
             for (String field : fields) {
                 String val = doc.getString(field);
-                if (val != null)
-                    userTraits += field + ": " + val + ", ";
+                if (val != null) userTraits.append(field).append(": ").append(val).append(", ");
             }
-            
-            Log.d(TAG, "User Traits for build look: " + userTraits);
-            
-            getAiTips(userTraits);
-
+            getAiTips(userTraits.toString());
         });
-    }
-
-    private boolean checkUserHasProducts(List<String> required) {
-        if (required == null || required.isEmpty()) return true;
-        
-        for (String req : required) {
-            boolean found = false;
-            for (Product p : userProducts) {
-                if (p.getName().toLowerCase().contains(req.toLowerCase()) || 
-                    p.getBrand().toLowerCase().contains(req.toLowerCase())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return false;
-        }
-        return true;
-    }
-
-    private void displayResults(List<Tip> results) {
-        if (results.isEmpty()) {
-            rvResults.setVisibility(View.GONE);
-            tvResultsTitle.setVisibility(View.GONE);
-            tvNoResults.setVisibility(View.VISIBLE);
-        } else {
-            adapter.updateList(results);
-            rvResults.setVisibility(View.VISIBLE);
-            tvResultsTitle.setVisibility(View.VISIBLE);
-            tvNoResults.setVisibility(View.GONE);
-        }
     }
 
     private void setupBottomNavigation() {
@@ -168,85 +139,48 @@ public class BuildLookActivity extends AppCompatActivity {
         });
     }
 
-    public void getAiTips(String userAppearance)
-    {
+    public void getAiTips(String userAppearance) {
         String userQuery = etStyleQuery.getText().toString();
-
         String prompt = getAiTipsPrompt(userQuery, userAppearance);
-        Log.d(TAG, "getAiTips: prompt: " + prompt);
 
         GeminiManager gemini = GeminiManager.getInstance();
+        gemini.sendText(prompt, this, new GeminiManager.GeminiCallback() {
+            @Override
+            public void onSuccess(String result) {
+                String[] sections = result.split("#");
+                
+                if (sections.length >= 4) {
+                    StringBuilder formattedResult = new StringBuilder();
+                    formattedResult.append("🌟 OVERVIEW\n").append(sections[0].trim()).append("\n\n");
+                    formattedResult.append("✨ FACE\n").append(sections[1].trim()).append("\n\n");
+                    formattedResult.append("👁️ EYES\n").append(sections[2].trim()).append("\n\n");
+                    formattedResult.append("💄 LIPS\n").append(sections[3].trim());
 
-        gemini.sendText(prompt, this,
-                new GeminiManager.GeminiCallback() {
-                    @Override
-                    public void onSuccess(String result) {
-                        Log.d(TAG, "onSuccess: " + result);
-                        String newText = "";
+                    tvAiResponseText.setText(formattedResult.toString());
+                    cardAiResults.setVisibility(View.VISIBLE);
+                    tvNoResults.setVisibility(View.GONE);
+                } else {
+                    Toast.makeText(BuildLookActivity.this, "Error: AI response format was unexpected", Toast.LENGTH_LONG).show();
+                    tvNoResults.setText("Try again with a different style.");
+                }
+            }
 
-                            String[] fields = result.split("#");
-                            if (fields.length == 4) {
-
-                                if (!fields[0].equals("NA"))
-                                    newText += "\n" + "General: " + fields[0];
-                                if (!fields[1].equals("NA"))
-                                    newText += "\n" + "Face:   " + fields[1];
-                                if (!fields[2].equals("NA"))
-                                    newText += "\n" + "Eye: " + fields[2];
-                                if (!fields[2].equals("NA"))
-                                    newText += "\n" + "Lip: " + fields[2];
-
-
-                                etStyleQuery.setText(newText);
-                            }
-                            else
-                            {
-                                Log.d(TAG, "onSuccess: Bad Format. fields size: " + fields.length);
-                                Toast.makeText(BuildLookActivity.this, "Error: Bad Format", Toast.LENGTH_LONG).show();
-
-                            }
-
-                    }
-
-                    @Override
-                    public void onError(Throwable error) {
-                        Log.d("TAG", "onError: " + error.getMessage());
-
-                        Toast.makeText(BuildLookActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-
-                });
-
+            @Override
+            public void onError(Throwable error) {
+                tvNoResults.setText("Error generating tips.");
+                Toast.makeText(BuildLookActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
-    private String getAiTipsPrompt(String userStyle, String userAppearance)
-    {
-        String prompt = "You are an expert Professional Makeup Artist and Beauty Consultant. Your task is to provide personalized makeup recommendations based on a user's physical characteristics and their desired style.\n" +
-                "\n" +
-                "### INPUT DATA:\n" +
-                "- **Desired Style: %s ** \n" +
-                "- **User Appearance: %s **\n" +
-                "\n" +
-                "### INSTRUCTIONS:\n" +
-                "1. Analyze how the desired style fits the user's specific features.\n" +
-                "2. Provide practical, professional, and aesthetically pleasing tips.\n" +
-                "3. You must provide exactly 4 sections in your response.\n" +
-                "4. **CRITICAL:** Separate each section ONLY with the '#' character. Do not use the '#' character anywhere else in the text.\n" +
-                "5. Do not include any introductory or concluding remarks outside of the four sections.\n" +
-                "\n" +
-                "### RESPONSE STRUCTURE:\n" +
-                "Section 1: A general overview of the look and why it suits the user.\n" +
-                "#\n" +
-                "Section 2: Detailed face makeup tips (foundation, contour, blush, highlight).\n" +
-                "#\n" +
-                "Section 3: Detailed eye makeup tips (eyeshadow, eyeliner, mascara, brows).\n" +
-                "#\n" +
-                "Section 4: Detailed lip makeup tips (liner, lipstick, gloss, finish).\n" +
-                "\n" +
-                "### OUTPUT EXAMPLE (Reference only):\n" +
-                "General description of the look... # Tips for the face... # Tips for the eyes... # Tips for the lips...";
-
-        return prompt.formatted(userStyle, userAppearance);
+    private String getAiTipsPrompt(String userStyle, String userAppearance) {
+        return "You are an expert Professional Makeup Artist and Beauty Consultant. Provide personalized makeup recommendations based on:\n" +
+                "- Desired Style: " + userStyle + "\n" +
+                "- User Appearance: " + userAppearance + "\n\n" +
+                "Instructions:\n" +
+                "1. Exactly 4 sections.\n" +
+                "2. Separate sections ONLY with '#'.\n" +
+                "3. Section 1: Overview, Section 2: Face, Section 3: Eyes, Section 4: Lips.\n" +
+                "Response format: Overview text... # Face tips... # Eye tips... # Lip tips...";
     }
-
 }

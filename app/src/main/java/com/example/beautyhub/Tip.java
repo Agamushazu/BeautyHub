@@ -15,6 +15,12 @@ public class Tip {
 
     public Tip() {}
 
+    public Tip(String title, String description, String videoUrl) {
+        this.title = title;
+        this.description = description;
+        this.videoUrl = videoUrl;
+    }
+
     @PropertyName("title")
     public String getTitle() { return title; }
     @PropertyName("title")

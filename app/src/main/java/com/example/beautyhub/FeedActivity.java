@@ -10,6 +10,7 @@ import com.example.beautyhub.utils.PostsAdapter;
 import com.example.beautyhub.utils.BeautyPost;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -18,11 +19,13 @@ import java.util.List;
 
 public class FeedActivity extends AppCompatActivity {
 
-    private List<BeautyPost> posts;
+    private List<BeautyPost> allPosts = new ArrayList<>();
+    private List<BeautyPost> filteredPosts = new ArrayList<>();
     private Button btnMyPosts;
     private RecyclerView recyclerView;
     private PostsAdapter postsAdapter;
     private FirebaseFirestore db;
+    private TabLayout tabLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +33,6 @@ public class FeedActivity extends AppCompatActivity {
         setContentView(R.layout.activity_feed);
 
         db = FirebaseFirestore.getInstance();
-        posts = new ArrayList<>();
 
         initViews();
         initRecyclerView();
@@ -41,11 +43,12 @@ public class FeedActivity extends AppCompatActivity {
     private void initViews() {
         btnMyPosts = findViewById(R.id.btn_gotoposts);
         recyclerView = findViewById(R.id.recycler_posts);
+        tabLayout = findViewById(R.id.feed_tabs);
     }
 
     private void initRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        postsAdapter = new PostsAdapter(posts);
+        postsAdapter = new PostsAdapter(filteredPosts);
         recyclerView.setAdapter(postsAdapter);
     }
 
@@ -54,6 +57,15 @@ public class FeedActivity extends AppCompatActivity {
 
         FloatingActionButton btnAddPost = findViewById(R.id.btn_add_post);
         btnAddPost.setOnClickListener(v -> startActivity(new Intent(this, AddPostActivity.class)));
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                filterPosts(tab.getPosition());
+            }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
+        });
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_feed);
@@ -83,10 +95,27 @@ public class FeedActivity extends AppCompatActivity {
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         BeautyPost post = dc.getDocument().toObject(BeautyPost.class);
                         if (dc.getType() == DocumentChange.Type.ADDED) {
-                            posts.add(dc.getNewIndex(), post);
-                            postsAdapter.notifyItemInserted(dc.getNewIndex());
+                            allPosts.add(dc.getNewIndex(), post);
                         }
                     }
+                    filterPosts(tabLayout.getSelectedTabPosition());
                 });
+    }
+
+    private void filterPosts(int tabIndex) {
+        filteredPosts.clear();
+        boolean showingGuides = (tabIndex == 1);
+
+        for (BeautyPost post : allPosts) {
+            // Post is a guide post if isTip is true OR it has tags
+            boolean isGuidePost = post.isTip() || (post.getTags() != null && !post.getTags().isEmpty());
+            
+            if (showingGuides && isGuidePost) {
+                filteredPosts.add(post);
+            } else if (!showingGuides && !isGuidePost) {
+                filteredPosts.add(post);
+            }
+        }
+        postsAdapter.notifyDataSetChanged();
     }
 }

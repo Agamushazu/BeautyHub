@@ -5,14 +5,27 @@
     android:layout_height="match_parent"
     android:background="#FDF0F0">
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/header_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <include layout="@layout/app_logo_header" />
 
-    </RelativeLayout>
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/feed_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:tabIndicatorColor="#A64452"
+            app:tabSelectedTextColor="#A64452"
+            app:tabTextColor="#888888">
+            <com.google.android.material.tabs.TabItem android:text="Community" />
+            <com.google.android.material.tabs.TabItem android:text="Guides Tips" />
+        </com.google.android.material.tabs.TabLayout>
+
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_posts"
