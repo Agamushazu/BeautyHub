@@ -3,10 +3,13 @@ package com.example.beautyhub;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
@@ -18,9 +21,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+
+import com.example.beautyhub.utils.GeminiManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -30,7 +38,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class PersonalInfoActivity extends AppCompatActivity {
 
@@ -41,12 +48,18 @@ public class PersonalInfoActivity extends AppCompatActivity {
     private String userId;
     private Uri currentPhotoUri;
 
+    private static final String TAG = "PersonalInfoActivity";
+
     // Launcher for taking a picture
     private final ActivityResultLauncher<Uri> takePictureLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicture(),
             result -> {
                 if (result && currentPhotoUri != null) {
-                    analyzeImage(currentPhotoUri);
+                    try {
+                        analyzeImage(currentPhotoUri);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
     );
@@ -56,7 +69,11 @@ public class PersonalInfoActivity extends AppCompatActivity {
             new ActivityResultContracts.GetContent(),
             uri -> {
                 if (uri != null) {
-                    analyzeImage(uri);
+                    try {
+                        analyzeImage(uri);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
     );
@@ -146,7 +163,7 @@ public class PersonalInfoActivity extends AppCompatActivity {
     private void setupAllSpinners() {
         String[] skin = {"Fair", "Medium", "Olive", "Deep"};
         String[] eyes = {"Brown", "Blue", "Green", "Hazel", "Other"};
-        String[] eyeShape = {"Almond", "Round", "Hooded", "Monolid"};
+        String[] eyeShape = {"Almond", "Round", "Hooded", "Monolid","Upturned","Downturned"};
         String[] faceShape = {"Oval", "Round", "Square", "Heart"};
         String[] eyebrowShape = {"Straight", "Arched", "Rounded", "S-Shaped", "Upward"};
         String[] lips = {"Thin", "Natural", "Full"};
@@ -171,30 +188,13 @@ public class PersonalInfoActivity extends AppCompatActivity {
         spinner.setAdapter(adapter);
     }
 
-    private void analyzeImage(Uri imageUri) {
+    private void analyzeImage(Uri imageUri) throws IOException {
         analysisProgress.setVisibility(View.VISIBLE);
         btnUploadPhoto.setEnabled(false);
         Toast.makeText(this, "Analyzing features...", Toast.LENGTH_SHORT).show();
 
-        new Handler().postDelayed(() -> {
-            analysisProgress.setVisibility(View.GONE);
-            btnUploadPhoto.setEnabled(true);
-
-            String[] skin = {"Fair", "Medium", "Olive", "Deep"};
-            String[] eyes = {"Brown", "Blue", "Green", "Hazel"};
-            String[] eyeShape = {"Almond", "Round", "Hooded"};
-            String[] faceShape = {"Oval", "Round", "Heart"};
-            String[] eyebrowShape = {"Arched", "Straight", "Rounded"};
-
-            Random r = new Random();
-            setSpinnerSelection(spinnerSkin, skin[r.nextInt(skin.length)]);
-            setSpinnerSelection(spinnerEyes, eyes[r.nextInt(eyes.length)]);
-            setSpinnerSelection(spinnerEyeShape, eyeShape[r.nextInt(eyeShape.length)]);
-            setSpinnerSelection(spinnerFace, faceShape[r.nextInt(faceShape.length)]);
-            setSpinnerSelection(spinnerEyebrows, eyebrowShape[r.nextInt(eyebrowShape.length)]);
-            
-            Toast.makeText(this, "Analysis complete! Check the fields below.", Toast.LENGTH_LONG).show();
-        }, 2500);
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+        getAiFaceAnalysis(bitmap);
     }
 
     private void saveUserData() {
@@ -256,5 +256,87 @@ public class PersonalInfoActivity extends AppCompatActivity {
                 spinner.setSelection(position);
             }
         }
+    }
+
+    public void getAiFaceAnalysis(Bitmap faceImage) {
+        String prompt = getAiFaceAnalyzerPrompt();
+
+        GeminiManager gemini = GeminiManager.getInstance();
+        gemini.sendImageAndText(faceImage, prompt, this, new GeminiManager.GeminiCallback() {
+            @Override
+            public void onSuccess(String result) {
+                Log.d(TAG, "onSuccess: result: " + result);
+                analysisProgress.setVisibility(View.GONE);
+                btnUploadPhoto.setEnabled(true);
+
+                try {
+                    // Clean result string in case it contains markdown backticks
+                    String jsonString = result.trim();
+                    if (jsonString.startsWith("```json")) {
+                        jsonString = jsonString.substring(7, jsonString.length() - 3).trim();
+                    } else if (jsonString.startsWith("```")) {
+                        jsonString = jsonString.substring(3, jsonString.length() - 3).trim();
+                    }
+
+                    JSONObject jsonObject = new JSONObject(jsonString);
+
+                    if (jsonObject.has("skin")) setSpinnerSelection(spinnerSkin, jsonObject.getString("skin"));
+                    if (jsonObject.has("eyes")) setSpinnerSelection(spinnerEyes, jsonObject.getString("eyes"));
+                    if (jsonObject.has("eyeShape")) setSpinnerSelection(spinnerEyeShape, jsonObject.getString("eyeShape"));
+                    if (jsonObject.has("faceShape")) setSpinnerSelection(spinnerFace, jsonObject.getString("faceShape"));
+                    if (jsonObject.has("eyebrowShape")) setSpinnerSelection(spinnerEyebrows, jsonObject.getString("eyebrowShape"));
+                    if (jsonObject.has("lipsSize")) setSpinnerSelection(spinnerLips, jsonObject.getString("lipsSize"));
+                    if (jsonObject.has("hairColor")) setSpinnerSelection(spinnerHair, jsonObject.getString("hairColor"));
+
+
+
+                    Toast.makeText(PersonalInfoActivity.this, "Analysis complete! Features updated.", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing JSON", e);
+                    Toast.makeText(PersonalInfoActivity.this, "Analysis succeeded but failed to parse result.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                Log.d(TAG, "onError: " + error.getMessage());
+                analysisProgress.setVisibility(View.GONE);
+                btnUploadPhoto.setEnabled(true);
+                Toast.makeText(PersonalInfoActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private String getAiFaceAnalyzerPrompt() {
+        return "Analyze the provided facial image for beauty and makeup profiling. Your response must be strictly in JSON format only, with no additional text or explanations.\n" +
+                "\n" +
+                "For each field, you MUST choose a value ONLY from the provided lists below. If you cannot determine a feature with high confidence, use \"NA\" as the value.\n" +
+                "\n" +
+                "Allowed Values:\n" +
+                "\n" +
+                "skin: [\"Fair\", \"Medium\", \"Olive\", \"Deep\"]\n" +
+                "\n" +
+                "eyes: [\"Brown\", \"Blue\", \"Green\", \"Hazel\"]\n" +
+                "\n" +
+                "eyeShape: [\"Almond\", \"Round\", \"Hooded\"]\n" +
+                "\n" +
+                "faceShape: [\"Oval\", \"Round\", \"Heart\"]\n" +
+                "\n" +
+                "eyebrowShape: [\"Arched\", \"Straight\", \"Rounded\"]\n" +
+                "\n" +
+                "lipsSize: [\"Thin\", \"Natural\", \"Full\"]\n" +
+                "\n" +
+                "hairColor: [\"Blonde\", \"Brown\", \"Grey\",\"Other\",\"Black\"]\n" +
+                "\n" +
+                "JSON Output Format:\n" +
+                "{\n" +
+                "\"skin\": \"value\",\n" +
+                "\"eyes\": \"value\",\n" +
+                "\"eyeShape\": \"value\",\n" +
+                "\"faceShape\": \"value\",\n" +
+                "\"eyebrowShape\": \"value\"\n" +
+                "\"lipsSize\": \"value\"\n" +
+                "\"hairColor\": \"value\"\n" +
+                "}";
     }
 }

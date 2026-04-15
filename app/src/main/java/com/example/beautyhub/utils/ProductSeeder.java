@@ -13,7 +13,7 @@ public class ProductSeeder {
         List<Product> products = new ArrayList<>();
 
         // --- FACE & COMPLEXION ---
-        products.add(createProduct("Double Wear Foundation", "Estee Lauder", "Face & Complexion", "Foundation", "24-hour staying power. Flawless, natural, matte finish.", "https://www.esteelauder.com/media/export/cms/products/640x600/el_sku_1G5Y01_640x600_0.jpg"));
+        products.add(createProduct("Dior Backstage Glow Maximizer Palette", "Dior", "Face & Complexion", "Highlighter", "Dior's iconic highlighter and multi-purpose makeup palette – for endless radiance.Dior Backstage Glow Maximizer Palette illuminates the face, eyes and décolleté with a wider range of finishes: pearlescent, metallic, glittery and duotone.", "https://www.dior.com/dw/image/v2/BGXS_PRD/on/demandware.static/-/Sites-master_dior/default/dw9ab11228/Y0000104/Y0000104_E000000579_E01_ZHC.jpg?sw=1800"));
         products.add(createProduct("Shape Tape Concealer", "Tarte", "Face & Complexion", "Concealer", "Full coverage concealer with a natural matte finish.", "https://tartecosmetics.com/dw/image/v2/BBPW_PRD/on/demandware.static/-/Sites-master-catalog-tarte/default/dw14c6e8e7/836/836_Power_Main.jpg"));
         products.add(createProduct("Photo Finish Primer", "Smashbox", "Face & Complexion", "Primer", "A transparent face primer gel that smoothes skin and blurs flaws.", "https://www.smashbox.com/media/export/cms/products/640x600/sbx_sku_60165_640x600_0.jpg"));
 

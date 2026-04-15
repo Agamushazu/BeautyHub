@@ -67,9 +67,12 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="80dp"
         android:layout_alignParentBottom="true"
         android:background="#FFFFFF"
+        app:itemIconSize="22dp"
+        app:itemPaddingTop="10dp"
+        app:itemPaddingBottom="10dp"
         app:itemIconTint="@color/nav_item_color_state"
         app:itemTextColor="@color/nav_item_color_state"
         app:labelVisibilityMode="labeled"
