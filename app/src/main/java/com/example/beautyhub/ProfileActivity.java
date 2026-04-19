@@ -132,7 +132,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void setupButtons() {
         findViewById(R.id.btn_personal_info).setOnClickListener(v -> startActivity(new Intent(this, PersonalInfoActivity.class)));
-        findViewById(R.id.btn_collection).setOnClickListener(v -> startActivity(new Intent(this, ProductCollection.class)));
+        findViewById(R.id.btn_collection).setOnClickListener(v -> startActivity(new Intent(this, ProductCollectionActivity.class)));
         findViewById(R.id.btn_favorites).setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
         findViewById(R.id.btn_sign_out).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();

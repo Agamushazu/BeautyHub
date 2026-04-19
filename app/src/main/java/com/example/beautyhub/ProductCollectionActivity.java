@@ -15,16 +15,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.beautyhub.utils.Product;
 import com.example.beautyhub.utils.ProductAdapter;
-import com.example.beautyhub.utils.ProductSeeder;
 import com.example.beautyhub.utils.TipSeeder;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductCollection extends AppCompatActivity {
+public class ProductCollectionActivity extends AppCompatActivity {
 
     private SearchView searchView;
     private RecyclerView rvMyCollection, rvAllProducts;
@@ -56,16 +56,11 @@ public class ProductCollection extends AppCompatActivity {
         initViews();
         setupRecyclerViews();
         setupSearch();
-        fetchUserCollection();
         fetchAllCatalogProducts();
 
-        // RUN THESE ONCE TO UPLOAD DATA, THEN COMMENT THEM OUT
-        // ProductSeeder.seedDatabase();
-        
-        // Pass 'this' as context to see errors on screen
         TipSeeder.seedTips(this);
 
-        btnAddProduct.setOnClickListener(v -> saveSelectedToCollection());
+        btnAddProduct.setOnClickListener(v -> saveSelectedProductIdsToCollection());
         btnBack.setOnClickListener(v -> finish());
     }
 
@@ -82,7 +77,7 @@ public class ProductCollection extends AppCompatActivity {
         rvMyCollection.setLayoutManager(new LinearLayoutManager(this));
         adapterMyCollection = new ProductAdapter(myProductsList);
         adapterMyCollection.setMyCollectionMode(true);
-        adapterMyCollection.setOnProductRemoveListener(this::removeProductFromCollection);
+        adapterMyCollection.setOnProductRemoveListener(this::removeProductIdFromCollection);
         rvMyCollection.setAdapter(adapterMyCollection);
 
         rvAllProducts.setLayoutManager(new LinearLayoutManager(this));
@@ -107,23 +102,28 @@ public class ProductCollection extends AppCompatActivity {
     private void fetchUserCollection() {
         if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
-        db.collection("users").document(userId).collection("my_collection")
-                .addSnapshotListener((value, error) -> {
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
-                        Log.e("ProductCollection", "Listen to user collection failed", error);
+                        Log.e("ProductCollection", "Listen to user doc failed", error);
                         return;
                     }
-                    if (value != null) {
-                        myProductsList.clear();
-                        for (QueryDocumentSnapshot doc : value) {
-                            Product p = doc.toObject(Product.class);
-                            if (p.getId() == null) p.setId(doc.getId());
-                            myProductsList.add(p);
-                        }
-                        adapterMyCollection.setProducts(myProductsList);
-                        tvEmptyMyCollection.setVisibility(myProductsList.isEmpty() ? View.VISIBLE : View.GONE);
+                    if (snapshot != null && snapshot.exists()) {
+                        List<String> myIds = (List<String>) snapshot.get("my_collection_ids");
+                        updateMyProductsUI(myIds != null ? myIds : new ArrayList<>());
                     }
                 });
+    }
+
+    private void updateMyProductsUI(List<String> ids) {
+        myProductsList.clear();
+        for (Product p : allProductsCatalog) {
+            if (ids.contains(p.getId())) {
+                myProductsList.add(p);
+            }
+        }
+        adapterMyCollection.setProducts(myProductsList);
+        tvEmptyMyCollection.setVisibility(myProductsList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void fetchAllCatalogProducts() {
@@ -140,34 +140,40 @@ public class ProductCollection extends AppCompatActivity {
                     allProductsCatalog.add(p);
                 }
                 adapterAllProducts.setProducts(allProductsCatalog);
+                fetchUserCollection(); // Fetch user collection after catalog is ready
             }
         });
     }
 
-    private void saveSelectedToCollection() {
+    private void saveSelectedProductIdsToCollection() {
         List<Product> selected = adapterAllProducts.getSelectedProducts();
         if (selected.isEmpty()) {
-            Toast.makeText(this, "Please select products from 'All Products'", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please select products", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
-        for (Product product : selected) {
-            db.collection("users").document(userId)
-                    .collection("my_collection")
-                    .document(product.getId())
-                    .set(product);
-        }
-        Toast.makeText(this, "Added to your collection!", Toast.LENGTH_SHORT).show();
+        
+        List<String> newIds = new ArrayList<>();
+        for (Product p : selected) newIds.add(p.getId());
+
+        db.collection("users").document(userId)
+                .update("my_collection_ids", FieldValue.arrayUnion(newIds.toArray()))
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Added to collection!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> {
+                    // If document doesn't exist or field doesn't exist, we might need to use set with merge
+                    db.collection("users").document(userId)
+                            .set(new java.util.HashMap<String, Object>() {{
+                                put("my_collection_ids", newIds);
+                            }}, com.google.firebase.firestore.SetOptions.merge());
+                });
     }
 
-    private void removeProductFromCollection(Product product) {
+    private void removeProductIdFromCollection(Product product) {
         if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
         db.collection("users").document(userId)
-                .collection("my_collection")
-                .document(product.getId())
-                .delete();
+                .update("my_collection_ids", FieldValue.arrayRemove(product.getId()));
     }
 }

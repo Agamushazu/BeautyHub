@@ -41,7 +41,7 @@
             android:name=".BuildLookActivity"
             android:exported="false" />
         <activity
-            android:name=".ProductCollection"
+            android:name=".ProductCollectionActivity"
             android:exported="false" />
         <activity
             android:name=".FavoritesActivity"

@@ -95,10 +95,30 @@ public class BuildLookActivity extends AppCompatActivity {
 
     private void loadUserProducts() {
         if (userId == null) return;
-        db.collection("users").document(userId).collection("my_collection").get().addOnSuccessListener(queryDocumentSnapshots -> {
-            userProducts.clear();
-            for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                userProducts.add(doc.toObject(Product.class));
+        // Updated to listen to 'my_collection_ids' array in the user document
+        db.collection("users").document(userId).addSnapshotListener((snapshot, e) -> {
+            if (e != null) {
+                Log.e(TAG, "Listen failed.", e);
+                return;
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                List<String> productIds = (List<String>) snapshot.get("my_collection_ids");
+                if (productIds != null && !productIds.isEmpty()) {
+                    // Fetch full product details from the 'products' collection
+                    db.collection("products").get().addOnSuccessListener(queryDocumentSnapshots -> {
+                        userProducts.clear();
+                        for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                            if (productIds.contains(doc.getId())) {
+                                Product p = doc.toObject(Product.class);
+                                if (p.getId() == null) p.setId(doc.getId());
+                                userProducts.add(p);
+                            }
+                        }
+                    });
+                } else {
+                    userProducts.clear();
+                }
             }
         });
     }
@@ -123,7 +143,22 @@ public class BuildLookActivity extends AppCompatActivity {
                 String val = doc.getString(field);
                 if (val != null) userTraits.append(field).append(": ").append(val).append(", ");
             }
-            getAiTips(userTraits.toString());
+
+            // Build products string for the AI in requested format
+            StringBuilder productsStr = new StringBuilder();
+            if (userProducts != null && !userProducts.isEmpty()) {
+                for (Product p : userProducts) {
+                    productsStr.append("Name: ").append(p.getName())
+                            .append(", Brand: ").append(p.getBrand())
+                            .append(", Category: ").append(p.getCategory())
+                            .append(", Description: ").append(p.getDescription() != null ? p.getDescription() : "N/A")
+                            .append("\n");
+                }
+            } else {
+                productsStr.append("No products in collection.");
+            }
+
+            getAiTips(userTraits.toString(), productsStr.toString());
         });
     }
 
@@ -139,10 +174,11 @@ public class BuildLookActivity extends AppCompatActivity {
         });
     }
 
-    public void getAiTips(String userAppearance) {
+    public void getAiTips(String userAppearance, String userProducts) {
         String userQuery = etStyleQuery.getText().toString();
-        String prompt = getAiTipsPrompt(userQuery, userAppearance);
+        String prompt = getAiTipsPrompt(userQuery, userAppearance, userProducts);
 
+        Log.d(TAG, "getAiTips: prompt: " + prompt);
         GeminiManager gemini = GeminiManager.getInstance();
         gemini.sendText(prompt, this, new GeminiManager.GeminiCallback() {
             @Override
@@ -173,14 +209,29 @@ public class BuildLookActivity extends AppCompatActivity {
         });
     }
 
-    private String getAiTipsPrompt(String userStyle, String userAppearance) {
+    private String getAiTipsPrompt(String userStyle, String userAppearance, String userProducts) {
         return "You are an expert Professional Makeup Artist and Beauty Consultant. Provide personalized makeup recommendations based on:\n" +
-                "- Desired Style: " + userStyle + "\n" +
-                "- User Appearance: " + userAppearance + "\n\n" +
+                "\n" +
+                "Desired Style: "+ userStyle + "\n" +
+                "\n" +
+                "User Appearance: " + userAppearance + "\n" +
+                "\n" +
+                "Available Products: " + userProducts + "\n" +
+                "\n" +
                 "Instructions:\n" +
-                "1. Exactly 4 sections.\n" +
-                "2. Separate sections ONLY with '#'.\n" +
-                "3. Section 1: Overview, Section 2: Face, Section 3: Eyes, Section 4: Lips.\n" +
-                "Response format: Overview text... # Face tips... # Eye tips... # Lip tips...";
+                "\n" +
+                "Exactly 4 sections.\n" +
+                "\n" +
+                "Separate sections ONLY with '#'.\n" +
+                "\n" +
+                "Section 1: Overview, Section 2: Face, Section 3: Eyes, Section 4: Lips.\n" +
+                "\n" +
+                "Product Integration: You MUST prioritize the products listed in the 'Available Products' section. For each step, explicitly name the specific Brand and Product Name from the user's list.\n" +
+                "\n" +
+                "If a necessary product for the look is missing from their list, suggest a creative way to use an existing product (e.g., using a lipstick as a blush) or provide a general technique.\n" +
+                "\n" +
+                "The advice should feel tailored to the specific textures and shades of the products they own.\n" +
+                "\n" +
+                "Response format: Overview text (referencing the overall look using their brands)... # Face tips (mentioning specific face products from their list)... # Eye tips (mentioning specific eye products from their list)... # Lip tips (mentioning specific lip products from their list)";
     }
 }

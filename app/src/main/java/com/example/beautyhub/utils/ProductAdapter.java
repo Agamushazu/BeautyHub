@@ -25,7 +25,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     private List<Product> filteredList;
     private Set<Product> selectedProducts = new HashSet<>();
     private Set<String> favoriteIds = new HashSet<>();
-    private Set<String> collectionIds = new HashSet<>(); // New: Tracks products already in collection
+    private Set<String> collectionIds = new HashSet<>(); 
     private OnProductRemoveListener removeListener;
     private boolean isMyCollectionMode = false;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -39,7 +39,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         this.products = products;
         this.filteredList = new ArrayList<>(products);
         fetchFavorites();
-        fetchCollectionIds(); // Listen to my_collection
+        fetchCollectionIds(); 
     }
 
     private void fetchFavorites() {
@@ -58,12 +58,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     private void fetchCollectionIds() {
         if (userId == null) return;
-        db.collection("users").document(userId).collection("my_collection")
-                .addSnapshotListener((value, error) -> {
-                    if (value != null) {
+        // Updated to listen to the user document's 'my_collection_ids' array field
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) return;
+                    if (snapshot != null && snapshot.exists()) {
+                        List<String> ids = (List<String>) snapshot.get("my_collection_ids");
                         collectionIds.clear();
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : value) {
-                            collectionIds.add(doc.getId());
+                        if (ids != null) {
+                            collectionIds.addAll(ids);
                         }
                         notifyDataSetChanged();
                     }
@@ -97,10 +100,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .into(holder.ivProduct);
 
-        // לחיצה על כרטיס המוצר תפתח דיאלוג עם פרטים מלאים
         holder.itemView.setOnClickListener(v -> showProductDescription(holder.itemView.getContext(), product));
 
-        // Favorite logic
         boolean isFav = favoriteIds.contains(product.getId());
         holder.btnFavorite.setImageResource(isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
         holder.btnFavorite.setOnClickListener(v -> toggleFavorite(product, isFav));
@@ -117,11 +118,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             
             holder.checkBox.setOnCheckedChangeListener(null);
             
-            // Logic: Checkbox is checked if it's already in collection OR currently selected
             boolean alreadyInCollection = collectionIds.contains(product.getId());
             holder.checkBox.setChecked(alreadyInCollection || selectedProducts.contains(product));
-            
-            // If it's already in collection, we can disable the checkbox or just let it stay checked
             holder.checkBox.setEnabled(!alreadyInCollection); 
 
             holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
