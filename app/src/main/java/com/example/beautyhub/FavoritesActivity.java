@@ -1,6 +1,7 @@
 package com.example.beautyhub;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import androidx.activity.EdgeToEdge;
@@ -24,8 +25,11 @@ public class FavoritesActivity extends AppCompatActivity {
     private RecyclerView rvFavorites;
     private TextView tvEmptyMessage, tvTitleMyCollection, tvTitleAllProducts;
     private MaterialButton btnBack;
+    
     private List<Product> favoritesList = new ArrayList<>();
+    private List<Product> allProductsCatalog = new ArrayList<>();
     private ProductAdapter adapter;
+    
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
@@ -46,7 +50,7 @@ public class FavoritesActivity extends AppCompatActivity {
 
         initViews();
         setupRecyclerView();
-        fetchFavorites();
+        fetchAllCatalogProducts(); // First fetch catalog, then favorites
 
         btnBack.setOnClickListener(v -> finish());
     }
@@ -79,22 +83,52 @@ public class FavoritesActivity extends AppCompatActivity {
         rvFavorites.setAdapter(adapter);
     }
 
-    private void fetchFavorites() {
+    private void fetchAllCatalogProducts() {
+        db.collection("products").addSnapshotListener((value, error) -> {
+            if (error != null) {
+                Log.e("FavoritesActivity", "Listen to products failed", error);
+                return;
+            }
+            if (value != null) {
+                allProductsCatalog.clear();
+                for (QueryDocumentSnapshot doc : value) {
+                    Product p = doc.toObject(Product.class);
+                    if (p.getId() == null) p.setId(doc.getId());
+                    allProductsCatalog.add(p);
+                }
+                fetchFavoriteIds(); // Fetch favorites after catalog is ready
+            }
+        });
+    }
+
+    private void fetchFavoriteIds() {
         if (auth.getCurrentUser() == null) return;
         String userId = auth.getCurrentUser().getUid();
-        db.collection("users").document(userId).collection("favorites")
-                .addSnapshotListener((value, error) -> {
-                    if (value != null) {
-                        favoritesList.clear();
-                        for (QueryDocumentSnapshot doc : value) {
-                            Product p = doc.toObject(Product.class);
-                            if (p.getId() == null) p.setId(doc.getId());
-                            favoritesList.add(p);
-                        }
-                        adapter.setProducts(favoritesList);
-                        updateEmptyUI();
+        
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Log.e("FavoritesActivity", "Listen to user doc failed", error);
+                        return;
+                    }
+                    if (snapshot != null && snapshot.exists()) {
+                        List<String> favIds = (List<String>) snapshot.get("favorite_ids");
+                        updateFavoritesUI(favIds != null ? favIds : new ArrayList<>());
+                    } else {
+                        updateFavoritesUI(new ArrayList<>());
                     }
                 });
+    }
+
+    private void updateFavoritesUI(List<String> ids) {
+        favoritesList.clear();
+        for (Product p : allProductsCatalog) {
+            if (ids.contains(p.getId())) {
+                favoritesList.add(p);
+            }
+        }
+        adapter.setProducts(favoritesList);
+        updateEmptyUI();
     }
 
     private void updateEmptyUI() {

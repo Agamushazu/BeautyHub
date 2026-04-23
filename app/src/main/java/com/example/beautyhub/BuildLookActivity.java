@@ -33,6 +33,7 @@ public class BuildLookActivity extends AppCompatActivity {
     private TipsAdapter adapter;
     private List<Tip> allTips = new ArrayList<>();
     private List<Product> userProducts = new ArrayList<>();
+    private Map<String, String> userTraitsMap = new HashMap<>();
     private FirebaseFirestore db;
     private String userId;
 
@@ -49,6 +50,7 @@ public class BuildLookActivity extends AppCompatActivity {
         setupRecyclerView();
         setupBottomNavigation();
         loadUserProducts();
+        loadUserTraits();
     }
 
     private void initViews() {
@@ -87,6 +89,19 @@ public class BuildLookActivity extends AppCompatActivity {
         });
     }
 
+    private void loadUserTraits() {
+        if (userId == null) return;
+        db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
+                for (String field : fields) {
+                    String val = doc.getString(field);
+                    if (val != null) userTraitsMap.put(field, val);
+                }
+            }
+        });
+    }
+
     private void setupRecyclerView() {
         rvResults.setLayoutManager(new LinearLayoutManager(this));
         adapter = new TipsAdapter(new ArrayList<>());
@@ -95,17 +110,11 @@ public class BuildLookActivity extends AppCompatActivity {
 
     private void loadUserProducts() {
         if (userId == null) return;
-        // Updated to listen to 'my_collection_ids' array in the user document
         db.collection("users").document(userId).addSnapshotListener((snapshot, e) -> {
-            if (e != null) {
-                Log.e(TAG, "Listen failed.", e);
-                return;
-            }
-
+            if (e != null) return;
             if (snapshot != null && snapshot.exists()) {
                 List<String> productIds = (List<String>) snapshot.get("my_collection_ids");
                 if (productIds != null && !productIds.isEmpty()) {
-                    // Fetch full product details from the 'products' collection
                     db.collection("products").get().addOnSuccessListener(queryDocumentSnapshots -> {
                         userProducts.clear();
                         for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
@@ -130,36 +139,43 @@ public class BuildLookActivity extends AppCompatActivity {
             return;
         }
 
-        if (userId == null) return;
-
         tvNoResults.setText("Generating your personalized look... please wait.");
         tvNoResults.setVisibility(View.VISIBLE);
         cardAiResults.setVisibility(View.GONE);
+        rvResults.setVisibility(View.GONE);
+        tvResultsTitle.setVisibility(View.GONE);
 
-        db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            StringBuilder userTraits = new StringBuilder();
-            String[] fields = {"skinTone", "eyeColor", "eyeShape", "hairColor", "eyebrowsShape", "lipsSize", "faceShape"};
-            for (String field : fields) {
-                String val = doc.getString(field);
-                if (val != null) userTraits.append(field).append(": ").append(val).append(", ");
+        // Filter tips based on user traits
+        List<Tip> recommendedTips = new ArrayList<>();
+        for (Tip tip : allTips) {
+            if (tip.matches(userTraitsMap)) {
+                recommendedTips.add(tip);
             }
+        }
 
-            // Build products string for the AI in requested format
-            StringBuilder productsStr = new StringBuilder();
-            if (userProducts != null && !userProducts.isEmpty()) {
-                for (Product p : userProducts) {
-                    productsStr.append("Name: ").append(p.getName())
-                            .append(", Brand: ").append(p.getBrand())
-                            .append(", Category: ").append(p.getCategory())
-                            .append(", Description: ").append(p.getDescription() != null ? p.getDescription() : "N/A")
-                            .append("\n");
-                }
-            } else {
-                productsStr.append("No products in collection.");
+        if (!recommendedTips.isEmpty()) {
+            adapter.updateList(recommendedTips);
+            rvResults.setVisibility(View.VISIBLE);
+            tvResultsTitle.setVisibility(View.VISIBLE);
+            tvResultsTitle.setText("Recommended Video Guides for You:");
+        }
+
+        // Proceed with AI generation
+        StringBuilder traitsStr = new StringBuilder();
+        for (Map.Entry<String, String> entry : userTraitsMap.entrySet()) {
+            traitsStr.append(entry.getKey()).append(": ").append(entry.getValue()).append(", ");
+        }
+
+        StringBuilder productsStr = new StringBuilder();
+        if (!userProducts.isEmpty()) {
+            for (Product p : userProducts) {
+                productsStr.append(p.getName()).append(" (").append(p.getBrand()).append("), ");
             }
+        } else {
+            productsStr.append("No products in collection.");
+        }
 
-            getAiTips(userTraits.toString(), productsStr.toString());
-        });
+        getAiTips(traitsStr.toString(), productsStr.toString());
     }
 
     private void setupBottomNavigation() {
@@ -178,60 +194,51 @@ public class BuildLookActivity extends AppCompatActivity {
         String userQuery = etStyleQuery.getText().toString();
         String prompt = getAiTipsPrompt(userQuery, userAppearance, userProducts);
 
-        Log.d(TAG, "getAiTips: prompt: " + prompt);
         GeminiManager gemini = GeminiManager.getInstance();
         gemini.sendText(prompt, this, new GeminiManager.GeminiCallback() {
             @Override
             public void onSuccess(String result) {
-                String[] sections = result.split("#");
-                
-                if (sections.length >= 4) {
+                // Improved parsing: filter out empty sections caused by leading/trailing separators
+                String[] rawSections = result.split("#");
+                List<String> cleanSections = new ArrayList<>();
+                for (String s : rawSections) {
+                    if (!s.trim().isEmpty()) {
+                        cleanSections.add(s.trim());
+                    }
+                }
+
+                if (cleanSections.size() >= 4) {
                     StringBuilder formattedResult = new StringBuilder();
-                    formattedResult.append("🌟 OVERVIEW\n").append(sections[0].trim()).append("\n\n");
-                    formattedResult.append("✨ FACE\n").append(sections[1].trim()).append("\n\n");
-                    formattedResult.append("👁️ EYES\n").append(sections[2].trim()).append("\n\n");
-                    formattedResult.append("💄 LIPS\n").append(sections[3].trim());
+                    formattedResult.append("🌟 OVERVIEW\n").append(cleanSections.get(0)).append("\n\n");
+                    formattedResult.append("✨ FACE\n").append(cleanSections.get(1)).append("\n\n");
+                    formattedResult.append("👁️ EYES\n").append(cleanSections.get(2)).append("\n\n");
+                    formattedResult.append("💄 LIPS\n").append(cleanSections.get(3));
 
                     tvAiResponseText.setText(formattedResult.toString());
                     cardAiResults.setVisibility(View.VISIBLE);
                     tvNoResults.setVisibility(View.GONE);
                 } else {
-                    Toast.makeText(BuildLookActivity.this, "Error: AI response format was unexpected", Toast.LENGTH_LONG).show();
-                    tvNoResults.setText("Try again with a different style.");
+                    tvNoResults.setText("AI response was incomplete. Please try again.");
                 }
             }
 
             @Override
             public void onError(Throwable error) {
                 tvNoResults.setText("Error generating tips.");
-                Toast.makeText(BuildLookActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private String getAiTipsPrompt(String userStyle, String userAppearance, String userProducts) {
-        return "You are an expert Professional Makeup Artist and Beauty Consultant. Provide personalized makeup recommendations based on:\n" +
-                "\n" +
+        return "You are an expert Professional Makeup Artist. Provide personalized makeup recommendations based on:\n" +
                 "Desired Style: "+ userStyle + "\n" +
-                "\n" +
                 "User Appearance: " + userAppearance + "\n" +
-                "\n" +
-                "Available Products: " + userProducts + "\n" +
-                "\n" +
+                "Available Products: " + userProducts + "\n\n" +
                 "Instructions:\n" +
-                "\n" +
-                "Exactly 4 sections.\n" +
-                "\n" +
-                "Separate sections ONLY with '#'.\n" +
-                "\n" +
-                "Section 1: Overview, Section 2: Face, Section 3: Eyes, Section 4: Lips.\n" +
-                "\n" +
-                "Product Integration: You MUST prioritize the products listed in the 'Available Products' section. For each step, explicitly name the specific Brand and Product Name from the user's list.\n" +
-                "\n" +
-                "If a necessary product for the look is missing from their list, suggest a creative way to use an existing product (e.g., using a lipstick as a blush) or provide a general technique.\n" +
-                "\n" +
-                "The advice should feel tailored to the specific textures and shades of the products they own.\n" +
-                "\n" +
-                "Response format: Overview text (referencing the overall look using their brands)... # Face tips (mentioning specific face products from their list)... # Eye tips (mentioning specific eye products from their list)... # Lip tips (mentioning specific lip products from their list)";
+                "Provide exactly 4 sections in this EXACT order: Overview, then Face tips, then Eye tips, then Lip tips.\n" +
+                "Separate sections ONLY with the '#' character.\n" +
+                "DO NOT start the response with '#'.\n" +
+                "DO NOT include section titles like 'Section 1' or 'Face:' inside the text, I will add them myself.\n" +
+                "Example format: Overview text here... # Face tips here... # Eye tips here... # Lip tips here...";
     }
 }

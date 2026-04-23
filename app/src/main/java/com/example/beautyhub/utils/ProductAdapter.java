@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.beautyhub.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,12 +45,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
     private void fetchFavorites() {
         if (userId == null) return;
-        db.collection("users").document(userId).collection("favorites")
-                .addSnapshotListener((value, error) -> {
-                    if (value != null) {
+        // Updated to listen to the user document's 'favorite_ids' array field
+        db.collection("users").document(userId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) return;
+                    if (snapshot != null && snapshot.exists()) {
+                        List<String> ids = (List<String>) snapshot.get("favorite_ids");
                         favoriteIds.clear();
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : value) {
-                            favoriteIds.add(doc.getId());
+                        if (ids != null) {
+                            favoriteIds.addAll(ids);
                         }
                         notifyDataSetChanged();
                     }
@@ -157,9 +161,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     private void toggleFavorite(Product product, boolean isCurrentlyFav) {
         if (userId == null) return;
         if (isCurrentlyFav) {
-            db.collection("users").document(userId).collection("favorites").document(product.getId()).delete();
+            db.collection("users").document(userId)
+                    .update("favorite_ids", FieldValue.arrayRemove(product.getId()));
         } else {
-            db.collection("users").document(userId).collection("favorites").document(product.getId()).set(product);
+            db.collection("users").document(userId)
+                    .update("favorite_ids", FieldValue.arrayUnion(product.getId()))
+                    .addOnFailureListener(e -> {
+                        // In case document doesn't exist
+                        db.collection("users").document(userId)
+                                .set(new java.util.HashMap<String, Object>() {{
+                                    put("favorite_ids", java.util.Collections.singletonList(product.getId()));
+                                }}, com.google.firebase.firestore.SetOptions.merge());
+                    });
         }
     }
 
