@@ -15,8 +15,11 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 import java.io.File;
+import java.util.List;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -73,23 +76,53 @@ public class ProfileActivity extends AppCompatActivity {
         String fileName = "profiles/" + userId + ".jpg";
         SupabaseStorageHelper.uploadPicture(file, fileName, (success, url, error) -> {
             if (success) {
-                db.collection("users").document(userId).update("profileImageUrl", url)
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
-                            getSharedPreferences("userInfo", MODE_PRIVATE).edit()
-                                    .putString("profileImageUrl", url).apply();
-                            
-                            btnSetProfilePic.setVisibility(View.GONE);
-                            btnSetProfilePic.setEnabled(true);
-                            btnSetProfilePic.setText("Set As Profile Picture");
-                            pendingImageFile = null;
-                        });
+                updateProfileInFirestore(url);
             } else {
                 Toast.makeText(this, "Upload failed: " + error, Toast.LENGTH_SHORT).show();
                 btnSetProfilePic.setEnabled(true);
                 btnSetProfilePic.setText("Set As Profile Picture");
             }
         });
+    }
+
+    private void updateProfileInFirestore(String url) {
+        // 1. עדכון מסמך המשתמש
+        db.collection("users").document(userId).update("profileImageUrl", url)
+                .addOnSuccessListener(aVoid -> {
+                    // 2. עדכון ה-SharedPreferences
+                    getSharedPreferences("userInfo", MODE_PRIVATE).edit()
+                            .putString("profileImageUrl", url).apply();
+                    
+                    // 3. עדכון כל הפוסטים של המשתמש (כדי שיופיעו נכון בפיד)
+                    updateUserPostsImage(url);
+                    
+                    Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
+                    btnSetProfilePic.setVisibility(View.GONE);
+                    btnSetProfilePic.setEnabled(true);
+                    btnSetProfilePic.setText("Set As Profile Picture");
+                    pendingImageFile = null;
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to update profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    btnSetProfilePic.setEnabled(true);
+                });
+    }
+
+    private void updateUserPostsImage(String newUrl) {
+        db.collection("posts")
+                .whereEqualTo("ownerUid", userId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots.isEmpty()) return;
+                    
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        batch.update(doc.getReference(), "ownerProfileImageUrl", newUrl);
+                    }
+                    batch.commit().addOnFailureListener(e -> {
+                        // שגיאה שקטה או לוג
+                    });
+                });
     }
 
     private void loadUserProfileData() {
@@ -107,7 +140,6 @@ public class ProfileActivity extends AppCompatActivity {
                     tvUsername.setText("Hello, " + nameToDisplay + "!");
                 }
 
-                // בדיקה אם המשתמש הוא Guide
                 if (doc.contains("isGuide") && doc.getBoolean("isGuide")) {
                     tvUserRole.setVisibility(View.VISIBLE);
                     tvUserRole.setText("Guide");
@@ -115,7 +147,6 @@ public class ProfileActivity extends AppCompatActivity {
                     tvUserRole.setVisibility(View.GONE);
                 }
 
-                // בדיקה אם המשתמש הוא מנהל
                 if (doc.contains("isAdmin") && doc.getBoolean("isAdmin")) {
                     btnAdminPanel.setVisibility(View.VISIBLE);
                 } else {

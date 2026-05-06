@@ -45,6 +45,7 @@ public class AddPostActivity extends AppCompatActivity {
     
     private List<String> selectedTagsList = new ArrayList<>();
     private Map<String, Boolean> tagStatusMap = new HashMap<>();
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,19 +110,15 @@ public class AddPostActivity extends AppCompatActivity {
         SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
         isGuide = sp.getBoolean("isGuide", false);
         
-        if (isGuide) {
-            layoutGuideTags.setVisibility(View.VISIBLE);
-        } else {
-            String uid = FirebaseAuth.getInstance().getUid();
-            if (uid != null) {
-                FirebaseFirestore.getInstance().collection("users").document(uid).get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists() && documentSnapshot.contains("isGuide")) {
-                            isGuide = documentSnapshot.getBoolean("isGuide");
-                            if (isGuide) layoutGuideTags.setVisibility(View.VISIBLE);
-                        }
-                    });
-            }
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            db.collection("users").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && documentSnapshot.contains("isGuide")) {
+                        isGuide = documentSnapshot.getBoolean("isGuide");
+                        if (isGuide) layoutGuideTags.setVisibility(View.VISIBLE);
+                    }
+                });
         }
     }
 
@@ -129,7 +126,6 @@ public class AddPostActivity extends AppCompatActivity {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_select_tags, null);
         LinearLayout container = dialogView.findViewById(R.id.container_tags);
 
-        // Define categories and their corresponding string arrays
         addCategoryToDialog(container, "Eye Color", R.array.eye_colors);
         addCategoryToDialog(container, "Eye Shape", R.array.eye_shapes);
         addCategoryToDialog(container, "Skin Tone", R.array.skin_tones);
@@ -146,16 +142,14 @@ public class AddPostActivity extends AppCompatActivity {
     }
 
     private void addCategoryToDialog(LinearLayout container, String title, int arrayResId) {
-        // Add Category Header
         TextView header = new TextView(this);
         header.setText(title);
         header.setTextSize(16);
         header.setPadding(0, 20, 0, 10);
-        header.setTextColor(getResources().getColor(R.color.nav_item_color_state)); // Use an existing color or #A64452
+        header.setTextColor(getResources().getColor(R.color.nav_item_color_state));
         header.setTypeface(null, android.graphics.Typeface.BOLD);
         container.addView(header);
 
-        // Add Checkboxes for each item in the array
         String[] items = getResources().getStringArray(arrayResId);
         for (String item : items) {
             CheckBox cb = new CheckBox(this);
@@ -222,25 +216,33 @@ public class AddPostActivity extends AppCompatActivity {
     }
 
     private void savePost(String title, String desc, String imageUrl, List<String> tags, boolean isTip) {
-        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
-        String nickname = sp.getString("nickname", "User");
-        String profileImageUrl = sp.getString("profileImageUrl", "");
         String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
 
-        // Create a new document reference to get a unique ID
-        DocumentReference docRef = FirebaseFirestore.getInstance().collection("posts").document();
-        String postId = docRef.getId();
+        // Fetch latest user data from Firestore instead of SharedPreferences to ensure profile picture is current
+        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            String nickname = documentSnapshot.getString("nickname");
+            String profileImageUrl = documentSnapshot.getString("profileImageUrl");
+            
+            if (nickname == null) nickname = "User";
+            if (profileImageUrl == null) profileImageUrl = "";
 
-        BeautyPost post = new BeautyPost(postId, title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl, tags, isTip);
-        
-        docRef.set(post)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Post Published!", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to publish post: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+            DocumentReference docRef = db.collection("posts").document();
+            String postId = docRef.getId();
+
+            BeautyPost post = new BeautyPost(postId, title, desc, uid, nickname, profileImageUrl, Timestamp.now(), imageUrl, tags, isTip);
+            
+            docRef.set(post)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Post Published!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to publish post: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Error fetching user info", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private File getFileFromUri(Uri uri) {

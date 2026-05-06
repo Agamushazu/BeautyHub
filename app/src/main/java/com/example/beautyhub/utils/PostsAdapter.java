@@ -15,6 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.signature.ObjectKey;
 import com.example.beautyhub.OtherUserProfileActivity;
 import com.example.beautyhub.PostDetailActivity;
 import com.example.beautyhub.R;
@@ -55,21 +57,15 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvDesc.setText(post.getDescription());
         holder.tvOwner.setText(post.getOwnerNickname());
 
-        // לוגיקה חזקה לזיהוי פוסט מדריך:
-        // אם השדה isTip הוא אמת, או אם פשוט יש תגיות בפוסט
         boolean representsGuidePost = post.isTip() || (post.getTags() != null && !post.getTags().isEmpty());
 
         if (representsGuidePost) {
-            // 1. הצגת תגית המדריך מתחת לשם
             holder.tvRole.setVisibility(View.VISIBLE);
             holder.tvRole.setText("OFFICIAL GUIDE");
+            holder.cardContainer.setStrokeWidth(6);
+            holder.cardContainer.setStrokeColor(Color.parseColor("#A64452"));
+            holder.cardContainer.setCardBackgroundColor(Color.parseColor("#FFF0F3"));
             
-            // 2. הוספת מסגרת ושינוי צבע רקע כדי להבדיל משאר הפוסטים
-            holder.cardContainer.setStrokeWidth(6); // מסגרת עבה
-            holder.cardContainer.setStrokeColor(Color.parseColor("#A64452")); // צבע ורוד כהה
-            holder.cardContainer.setCardBackgroundColor(Color.parseColor("#FFF0F3")); // רקע ורדרד עדין
-            
-            // 3. הצגת תגיות כ-Hashtags מעל הכותרת
             List<String> tags = post.getTags();
             if (tags != null && !tags.isEmpty()) {
                 holder.tvTags.setVisibility(View.VISIBLE);
@@ -82,7 +78,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 holder.tvTags.setVisibility(View.GONE);
             }
         } else {
-            // עיצוב פוסט רגיל
             holder.tvRole.setVisibility(View.GONE);
             holder.tvTags.setVisibility(View.GONE);
             holder.cardContainer.setStrokeWidth(0);
@@ -95,13 +90,15 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.tvDate.setText(sdf.format(post.getCreatedAt().toDate()));
         }
 
-        // Profile Image
+        // Profile Image - Added DiskCacheStrategy and signature to handle image updates
         String profPath = post.getOwnerProfileImageUrl();
         if (profPath != null && !profPath.isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(profPath)
                     .circleCrop()
                     .placeholder(R.drawable.ic_launcher_background)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .signature(new ObjectKey(profPath)) // This helps Glide identify if the URL changed
                     .into(holder.ivProfile);
         } else {
             holder.ivProfile.setImageResource(R.drawable.ic_launcher_background);
@@ -118,7 +115,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.ivPost.setVisibility(View.GONE);
         }
 
-        // Click listeners
         View.OnClickListener openProfileListener = v -> {
             Intent intent = new Intent(holder.itemView.getContext(), OtherUserProfileActivity.class);
             intent.putExtra("userId", post.getOwnerUid());
